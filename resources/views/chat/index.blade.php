@@ -196,11 +196,11 @@
             </div>
         </div>
 
-        {{-- --- MAIN CHAT SYSTEM PANEL: Takes up remaining viewport height dynamically --- --}}
+        {{-- --- MAIN CHAT SYSTEM PANEL --- --}}
         <div class="flex-1 flex flex-col min-h-0 h-full bg-slate-950/40 relative">
             
             @if($currentChannel)
-                {{-- --- DESKTOP HEADER: Kept static at the top --- --}}
+                {{-- --- DESKTOP HEADER --- --}}
                 <div class="hidden lg:flex px-6 py-4 bg-slate-900/40 border-b border-slate-900 items-center justify-between shadow-sm shrink-0">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-[rgb(var(--brand-primary))]/10 border border-[rgb(var(--brand-primary))]/20 text-[rgb(var(--brand-text))] rounded-xl shadow-inner">
@@ -221,7 +221,7 @@
                     </a>
                 </div>
 
-                {{-- --- THE CHAT TIMELINE: The *only* container allowed to scroll freely inside this wrapper --- --}}
+                {{-- --- THE CHAT TIMELINE --- --}}
                 <div id="chat-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 shadow-inner scroll-smooth min-h-0">
                     <div class="flex items-center justify-center my-2">
                         <div class="bg-[rgb(var(--brand-bg-accent))]/10 border border-[rgb(var(--brand-border))]/40 px-3 py-1 rounded-full text-[10px] text-[rgb(var(--brand-text))]/80 font-mono tracking-wide shadow-sm">
@@ -276,7 +276,7 @@
                     </div>
                 </div>
 
-                {{-- --- STATIC CHAT INPUT BAR: Locked to the bottom edge --- --}}
+                {{-- --- STATIC CHAT INPUT BAR --- --}}
                 <div class="p-4 bg-slate-900/40 border-t border-slate-900 shrink-0">
                     <form id="chat-form" action="{{ route('messages.store', ['channel' => $currentChannel->id]) }}" method="POST" class="flex items-center gap-2 relative">
                         @csrf
@@ -341,6 +341,9 @@
             // Lock initial viewport viewing focus directly onto the bottom entries
             chatTimeline.scrollTop = chatTimeline.scrollHeight;
 
+            // Channel Context Variable safely set up for the read endpoint snippet
+            const channelId = @json($currentChannel?->id ?? null);
+
             // --- 🔄 1-SECOND BACKGROUND AUTO-REFRESH ENGINE ---
             const currentUrl = window.location.href;
             
@@ -377,6 +380,16 @@
                                     
                                     if (!isMessageFromMe) {
                                         playNotificationSound();
+
+                                        // ==========================================
+                                        // 📝 MARK-READ SNIPPET INSERTED HERE
+                                        // ==========================================
+                                        if (channelId) {
+                                            fetch(`/channels/${channelId}/read`, {    
+                                                method: 'POST',    
+                                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                                            }).catch(err => console.error("Error updating read state:", err));
+                                        }
                                     }
                                 }
 

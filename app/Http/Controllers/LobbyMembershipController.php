@@ -42,8 +42,6 @@ class LobbyMembershipController extends Controller
 
     /**
      * FIXED: Changed second parameter to explicit ID lookup. 
-     * Since LobbyMember is an intermediate pivot table model, implicit Route Model Binding 
-     * often fails unless custom keys are explicitly bound in RouteServiceProvider.
      */
     public function updateStatus(Request $request, $memberId, $status)
     {
@@ -77,36 +75,31 @@ class LobbyMembershipController extends Controller
 
     public function viewMemberCv(Lobby $lobby, User $user)
     {
-        // FIXED SAFETY GATES: Check if the user is the owner, OR an already APPROVED team member.
-        $isOwner = $lobby->owner_id === auth()->id();
+        $currentUserId = auth()->id();
+        $isOwner = $lobby->owner_id === $currentUserId;
         
+        // Safety gates check: Is the viewer an already APPROVED team member.
         $isApprovedTeamMember = $lobby->members()
-            ->where('user_id', auth()->id())
+            ->where('user_id', $currentUserId)
             ->where('lobby_members.status', 'accepted')
             ->exists();
 
-        // Also allow the owner to look at someone's CV if they are currently PENDING
-        $isPendingApplicant = $lobby->members()
-            ->where('user_id', $user->id)
-            ->where('lobby_members.status', 'pending')
-            ->exists();
-
-        // Check if the user trying to view is authorized
+        // Check if the user trying to view is authorized at all
         if (!$isOwner && !$isApprovedTeamMember) {
             abort(403, 'Unauthorized. You must be an approved member of this project workspace to review assets.');
         }
 
-        // If a regular member is trying to spy on another applicant's CV who isn't even approved yet, block them
-        if (!$isOwner && !$isPendingApplicant && ($user->id !== auth()->id())) {
-             // Only let owners see pending applicants' CVs
-             $isApprovedTarget = $lobby->members()
+        // If a non-owner tries to view someone else's CV, make sure the target is an approved team member
+        if (!$isOwner && ($user->id !== $currentUserId)) {
+            // FIXED: Added explicit 'lobby_members.status' to eliminate SQL ambiguous column errors
+            $isApprovedTarget = $lobby->members()
                 ->where('user_id', $user->id)
                 ->where('lobby_members.status', 'accepted')
                 ->exists();
                 
-             if (!$isApprovedTarget) {
-                 abort(403, 'Unauthorized asset lookup configuration.');
-             }
+            if (!$isApprovedTarget) {
+                abort(403, 'Unauthorized asset lookup configuration. Pending applicants can only be reviewed by the Guild Leader.');
+            }
         }
 
         // Grab the file path from the requested user's profile relationship profile

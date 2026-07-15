@@ -20,13 +20,13 @@ class DashboardController extends Controller
             $user->profile()->create();
         }
 
-        // Radar Scan: Fetch current user's attribute tags
+        // Radar Scan: Fetch current user's attribute tags cleanly by array values
         $userInterestIds = $user->interests()->pluck('interests.id')->toArray();
 
         $search = $request->input('search');
         $interestId = $request->input('interest');
 
-        // 1. Build Base Filterable Query Stack (ADDED: has('owner') check to prevent null property crashes)
+        // 1. Build Base Filterable Query Stack
         $baseQuery = Lobby::has('owner')->with([
             'owner', 
             'interests', 
@@ -35,6 +35,33 @@ class DashboardController extends Controller
             }
         ]);
 
+        // 2. Separate recommendations logic completely BEFORE applying search/filter state mutations
+        // This stops search terms from breaking your recommendation feeds!
+        $recommendedQuery = Lobby::has('owner')
+            ->where('owner_id', '!=', $user->id)
+            ->with(['owner', 'interests']);
+
+        if (!empty($userInterestIds)) {
+            // FIXED: Using whereHas on the relationship to match pivot associations cleanly
+            $recommendedQuery->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
+                $query->whereIn('interest_id', $userInterestIds); // Match pivot foreign key column name
+            }]);
+        }
+
+        $recommendedLobbies = $recommendedQuery
+            ->orderBy('matching_score', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get()
+            ->map(function ($lobby) {
+                // If there are no interests matching, ensure it defaults safely to 0
+                $score = $lobby->matching_score ?? 0;
+                $percentage = $score * 20; 
+                $lobby->match_percentage = min($percentage, 100); 
+                return $lobby;
+            });
+
+        // 3. Apply general dashboard global searching to the regular feed arrays
         if ($search) {
             $baseQuery->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
@@ -49,29 +76,13 @@ class DashboardController extends Controller
             });
         }
 
-        // 2. Fetch Recommended Campaign Lobbies (Filtered + Interest Score Intersections)
-        $recommendedLobbies = (clone $baseQuery)
-            ->where('owner_id', '!=', $user->id)
-            ->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
-                $query->whereIn('interests.id', $userInterestIds);
-            }])
-            ->orderBy('matching_score', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get()
-            ->map(function ($lobby) {
-                $percentage = $lobby->matching_score * 20;
-                $lobby->match_percentage = min($percentage, 100); 
-                return $lobby;
-            });
-
-        // 3. Fetch Freshly Discovered Guilds (Global Feed)
+        // 4. Fetch Freshly Discovered Guilds (Global Feed using mutated base constraints)
         $newestLobbies = (clone $baseQuery)
             ->latest()
             ->take(6)
             ->get();
 
-        // 4. Fetch User's Active Parties & Connected Roster Nodes (FIXED: Added owner and interests to avoid N+1 errors)
+        // 5. Fetch User's Active Parties & Connected Roster Nodes
         $joinedLobbies = Lobby::has('owner')
             ->whereHas('members', function ($q) use ($user) {
                 $q->where('lobby_members.user_id', $user->id)
@@ -86,8 +97,7 @@ class DashboardController extends Controller
             ])
             ->get();
 
-        // 5. Fetch incoming applications using explicit pivot intermediate extraction loaders
-        // FIXED: Explicitly bringing along pivot columns so your dashboard view can read `withPivot('id')` to handle accept/deny links
+        // 6. Fetch incoming applications using explicit pivot intermediate extraction loaders
         $ownedLobbiesWithRequests = Lobby::has('owner')
             ->where('owner_id', $user->id)
             ->whereHas('members', function ($query) {
@@ -97,7 +107,7 @@ class DashboardController extends Controller
                 'interests',
                 'members' => function ($query) {
                     $query->where('lobby_members.status', 'pending')
-                          ->withPivot('id', 'status', 'created_at') // Crucial for getting the exact LobbyMember record key for your approval routes
+                          ->withPivot('id', 'status', 'created_at')
                           ->with('profile');
                 }
             ])

@@ -49,4 +49,5 @@ class Lobby extends Model
     {
         return $this->hasMany(Message::class);
     }
+    
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Interest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,6 +38,7 @@ class ProfileController extends Controller
             'skills' => ['nullable', 'string', 'max:500'],
             'cv' => ['nullable', 'file', 'mimes:pdf,docx', 'max:4096'], // 4MB max
             'interests' => ['required', 'array', 'min:3', 'max:5'], // Force 3-5 interests
+            'avatar' => 'nullable|image|mimes:jpeg,png,webp|max:4096', // 4MB max
         ]);
 
         // Update User credentials
@@ -47,10 +47,14 @@ class ProfileController extends Controller
         // Update Profile details
         $profileData = $request->only('bio', 'skills');
 
+        // Handle Avatar file upload safely
+        if ($request->hasFile('avatar')) {
+            $profileData['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
         // Handle CV file upload safely
         if ($request->hasFile('cv')) {
-            $path = $request->file('cv')->store('cvs', 'public');
-            $profileData['cv_path'] = $path;
+            $profileData['cv_path'] = $request->file('cv')->store('cvs', 'public');
         }
 
         $user->profile()->updateOrCreate(['user_id' => $user->id], $profileData);
@@ -77,23 +81,26 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
-    public function updateCv(Request $request)
+
+   public function updateCv(Request $request)
 {
     $request->validate([
-        'cv' => 'required|file|mimes:pdf,docx|max:5120', // 5MB limit
+        'cv'     => ['nullable', 'file', 'mimes:pdf,docx', 'max:5120'],
+        'avatar' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
     ]);
 
-    $user = $request->user();
+    $profile = $request->user()->profile()->firstOrCreate([]);
 
-    // Store the raw file in the secure 'cvs' folder under public storage
-    $path = $request->file('cv')->store('cvs', 'public');
+    if ($request->hasFile('cv')) {
+        $profile->cv_path = $request->file('cv')->store('cvs', 'public');
+    }
 
-    // Update or create the profile record linked to the user
-    $user->profile()->updateOrCreate(
-        ['user_id' => $user->id],
-        ['cv_path' => $path]
-    );
+    if ($request->hasFile('avatar')) {
+        $profile->avatar_path = $request->file('avatar')->store('avatars', 'public');
+    }
 
-    return back()->with('success', 'Your CV file has been securely uploaded and linked.');
+    $profile->save();
+
+    return back()->with('success', 'Profile updated successfully.');
 }
-}
+}   

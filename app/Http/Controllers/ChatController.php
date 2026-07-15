@@ -13,6 +13,20 @@ class ChatController extends Controller
      */
     public function index(Lobby $lobby)
     {
+        $userId = auth()->id();
+
+        // 1. GATEKEEPER CHECK: Verify the user is either the owner OR an accepted member
+        if ($lobby->owner_id !== $userId) {
+            $isAccepted = $lobby->members()
+                ->where('user_id', $userId)
+                ->where('lobby_members.status', 'accepted') // Enforce review completion
+                ->exists();
+
+            if (!$isAccepted) {
+                return redirect()->route('dashboard')->with('error', 'Access Denied: You must be an approved team member to access this chat workspace.');
+            }
+        }
+
         // Load relationships to make sure they are available in your blade layout
         $lobby->load(['channels.messages.user', 'members']);
 
@@ -28,9 +42,18 @@ class ChatController extends Controller
      */
     public function show(Lobby $lobby)
     {
-        // Guard: Prevent unauthorized users outside the party row from eavesdropping
-        if (!$lobby->members->contains(auth()->id()) && $lobby->owner_id !== auth()->id()) {
-            return redirect()->route('dashboard')->with('error', 'You must be an approved team member to open this communication feed.');
+        $userId = auth()->id();
+
+        // 2. GATEKEEPER CHECK: Refactored collection contains() logic to look for explicit database row status
+        if ($lobby->owner_id !== $userId) {
+            $isAccepted = $lobby->members()
+                ->where('user_id', $userId)
+                ->where('lobby_members.status', 'accepted')
+                ->exists();
+
+            if (!$isAccepted) {
+                return redirect()->route('dashboard')->with('error', 'You must be an approved team member to open this communication feed.');
+            }
         }
 
         $messages = $lobby->messages()->with('user')->oldest()->take(100)->get();
@@ -47,8 +70,18 @@ class ChatController extends Controller
      */
     public function store(Request $request, Lobby $lobby)
     {
-        if (!$lobby->members->contains(auth()->id()) && $lobby->owner_id !== auth()->id()) {
-            return abort(403);
+        $userId = auth()->id();
+
+        // 3. GATEKEEPER CHECK: Stop malicious users from POSTing messages via API if unapproved
+        if ($lobby->owner_id !== $userId) {
+            $isAccepted = $lobby->members()
+                ->where('user_id', $userId)
+                ->where('lobby_members.status', 'accepted')
+                ->exists();
+
+            if (!$isAccepted) {
+                return abort(403, 'Unauthorized transmission parameters.');
+            }
         }
 
         $request->validate([
@@ -56,57 +89,59 @@ class ChatController extends Controller
         ]);
 
         $lobby->messages()->create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'content' => $request->input('content'),
         ]);
 
         return redirect()->back();
     }
-/**
- * Stream new messages in real-time using Server-Sent Events (SSE).
- */
-public function stream(Request $request, $channelId)
-{
-    return response()->stream(function () use ($channelId, $request) {
-        // Set an execution time limit to let the stream persist safely
-        set_time_limit(0);
 
-        $lastId = $request->query('lastId', 0);
+    /**
+     * Stream new messages in real-time using Server-Sent Events (SSE).
+     */
+    public function stream(Request $request, $channelId)
+    {
+        return response()->stream(function () use ($channelId, $request) {
+            // Set an execution time limit to let the stream persist safely
+            set_time_limit(0);
 
-        // Keep connection open for 30 seconds max per lifecycle connection loop
-        $timeout = 30; 
-        $start = time();
+            $lastId = $request->query('lastId', 0);
 
-        while ((time() - $start) < $timeout) {
-            // Check if any new message node has been committed since the client's last viewpoint checkpoint
-            $newMessages = \App\Models\Message::where('lobby_id', $channelId) // Check if relation matches your schema (e.g., channel_id)
-                ->where('id', '>', $lastId)
-                ->with('user')
-                ->oldest()
-                ->get();
+            // Keep connection open for 30 seconds max per lifecycle connection loop
+            $timeout = 30; 
+            $start = time();
 
-            if ($newMessages->count() > 0) {
-                foreach ($newMessages as $msg) {
-                    echo "data: " . json_encode([
-                        'id' => $msg->id,
-                        'user_id' => $msg->user_id,
-                        'user_name' => $msg->user->name ?? 'Anonymous',
-                        'content' => $msg->content,
-                        'time' => $msg->created_at->format('g:i A'),
-                    ]) . "\n\n";
-                    
-                    $lastId = $msg->id;
+            while ((time() - $start) < $timeout) {
+                // Check if any new message node has been committed since the client's last viewpoint checkpoint
+                $newMessages = \App\Models\Message::where('lobby_id', $channelId) // Check if relation matches your schema (e.g., channel_id)
+                    ->where('id', '>', $lastId)
+                    ->with('user')
+                    ->oldest()
+                    ->get();
+
+                if ($newMessages->count() > 0) {
+                    foreach ($newMessages as $msg) {
+                        echo "data: " . json_encode([
+                            'id' => $msg->id,
+                            'user_id' => $msg->user_id,
+                            'user_name' => $msg->user->name ?? 'Anonymous',
+                            'content' => $msg->content,
+                            'time' => $msg->created_at->format('g:i A'),
+                        ]) . "\n\n";
+                        
+                        $lastId = $msg->id;
+                    }
+                    ob_flush();
+                    flush();
                 }
-                ob_flush();
-                flush();
-            }
 
-            // Sleep for 2 seconds before inspecting database nodes again
-            sleep(2);
-        }
-    }, 2000, [
-        'Content-Type' => 'text/event-stream',
-        'Cache-Control' => 'no-cache',
-        'Connection' => 'keep-alive',
-    ]);
-}}
+                // Sleep for 2 seconds before inspecting database nodes again
+                sleep(2);
+            }
+        }, 2000, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'Connection' => 'keep-alive',
+        ]);
+    }
+}

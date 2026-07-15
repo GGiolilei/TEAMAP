@@ -1,4 +1,11 @@
 <x-guest-layout>
+    <!-- Brand Logo -->
+    <div class="flex justify-center mb-4">
+        <a href="/">
+            <img src="{{ asset('image/teamapio.png') }}" alt="{{ config('app.name', 'Laravel') }}" class="w-20 h-20 object-contain">
+        </a>
+    </div>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 

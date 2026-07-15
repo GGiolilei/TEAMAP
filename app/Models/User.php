@@ -49,6 +49,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationship Alias for backward compatibility:
+     * Allows method-style chaining like $user->hostedLobbies()->withCount(...)->get()
+     */
+    public function hostedLobbies(): HasMany
+    {
+        return $this->ownedLobbies();
+    }
+
+    /**
      * The project workspace lobbies this user has joined as a team participant.
      */
     public function lobbies(): BelongsToMany
@@ -66,5 +75,14 @@ class User extends Authenticatable
     public function getJoinedLobbiesAttribute()
     {
         return $this->lobbies;
+    }
+
+    /**
+     * Dynamic Attribute Model Alias for backward compatibility:
+     * Maps $user->hostedLobbies cleanly to the underlying collection.
+     */
+    public function getHostedLobbiesAttribute()
+    {
+        return $this->ownedLobbies;
     }
 }
