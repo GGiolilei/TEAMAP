@@ -9,6 +9,7 @@ use App\Http\Controllers\LobbyMembershipController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\TaskController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,7 +62,10 @@ Route::patch('/profile/cv', [ProfileController::class, 'updateCv'])->name('profi
     Route::get('/lobbies/{lobby}', [LobbyController::class, 'show'])->name('lobbies.show');
     
     Route::delete('/lobbies/{lobby}/leave', [LobbyController::class, 'leave'])->name('lobbies.leave');
-
+    Route::middleware(['auth'])->group(function () {
+    // This automatically creates tasks.index, tasks.create, tasks.store, etc.
+    Route::resource('task', TaskController::class);
+});
     // --- Lobby Membership Actions & Moderation ---
     Route::post('/lobby/{lobby}/join', [LobbyMembershipController::class, 'join'])->name('lobby.join');
     Route::post('/lobbies/{lobby}/join', [LobbyController::class, 'join'])->name('lobbies.join');
@@ -101,5 +105,23 @@ Route::get('/chat/channel/{channel}/huddle', function ($channelId) {
     // Added "chat." before huddle
     return view('chat.huddle', ['channelId' => $channelId]); 
 })->name('chat.huddle')->middleware(['auth']);
+
+
+// --- TASK MANAGEMENT ROUTES ---//
+Route::middleware(['auth'])->group(function () {
+   Route::get('lobbies/{lobby}/tasks', [App\Http\Controllers\TaskController::class, 'index'])
+    ->name('lobbies.tasks.index');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    Route::post('lobbies/{lobby}/tasks', [TaskController::class, 'store'])
+    ->name('lobbies.tasks.store');
+});
+Route::post('/lobbies/{lobby}/tasks', [TaskController::class, 'store'])->name('lobbies.tasks.store');
+Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+// API/Fetch layout updates for drag mutations
+Route::post('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
 
 });

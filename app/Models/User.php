@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Profile;
+use App\Models\task;
 
 class User extends Authenticatable
 {
@@ -85,4 +87,8 @@ class User extends Authenticatable
     {
         return $this->ownedLobbies;
     }
+    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(Task::class);
+}
 }

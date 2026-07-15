@@ -88,25 +88,35 @@
     {{-- Root node forced to exactly screen height and forbidden to scroll on a global page level --}}
     <div id="theme-root" class="theme-blue bg-slate-950 h-screen h-[100dvh] text-stone-100 flex flex-col lg:flex-row selection:bg-rose-500/30 selection:text-rose-300 overflow-hidden relative">
         
-        {{-- --- FIXED MOBILE HEADER: Now strictly locked at the top --- --}}
+        {{-- --- FIXED MOBILE HEADER --- --}}
         <div class="w-full lg:hidden px-4 sm:px-6 py-3.5 bg-slate-900 border-b border-slate-950 flex items-center justify-between shrink-0 z-10 shadow-md">
             <div>
                 <h3 class="text-sm font-bold text-white"># {{ $currentChannel?->name ?? 'Lobby' }}</h3>
             </div>
 
-            {{-- Huddle Entry Button --}}
-            @if($currentChannel)
-                <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
-                   class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div class="flex items-center gap-2">
+                {{-- Task Board Link Button --}}
+                <a href="{{ route('task.index') }}" 
+                   class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-stone-300 hover:text-white text-xs font-medium rounded-xl transition-all shadow-md active:scale-95">
+                    <svg class="w-3.5 h-3.5 text-[rgb(var(--brand-text))]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
-                    Join Huddle
+                    Tasks
                 </a>
-            @endif
+
+                @if($currentChannel)
+                    <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
+                       class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Join Huddle
+                    </a>
+                @endif
+            </div>
         </div>
 
-        {{-- --- SIDEBAR: Fixed max height limits on mobile so it doesn't break layout rules --- --}}
+        {{-- --- SIDEBAR --- --}}
         <div class="w-full lg:w-80 bg-slate-900 border-b lg:border-b-0 lg:border-r border-[rgb(var(--brand-border))]/60 p-6 flex flex-col justify-between shrink-0 overflow-y-auto max-h-[35vh] lg:max-h-none lg:h-full shadow-lg transition-all duration-300">
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
@@ -212,13 +222,24 @@
                         </div>
                     </div>
                     
-                    <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
-                       class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Join Huddle
-                    </a>
+                    <div class="flex items-center gap-2">
+                        {{-- Task Board Link Button --}}
+                        <a href="{{ route('task.index') }}" 
+                           class="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-850 hover:border-[rgb(var(--brand-border))]/60 text-stone-300 hover:text-white text-xs font-semibold rounded-xl transition-all shadow-md active:scale-95">
+                            <svg class="w-3.5 h-3.5 text-[rgb(var(--brand-text))]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            Task Board
+                        </a>
+
+                        <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
+                           class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Join Huddle
+                        </a>
+                    </div>
                 </div>
 
                 {{-- --- THE CHAT TIMELINE --- --}}
