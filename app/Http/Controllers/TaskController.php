@@ -11,26 +11,35 @@ use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
-    public function index()
+    /**
+     * Display the Kanban task board view with workspace layout payloads.
+     */
+    public function index(Lobby $lobby)
     {
-        // Fallback: Get the first lobby the authenticated user belongs to
-        $lobby = auth()->user()->lobbies()->first() ?? Lobby::first();
-        
-        if (!$lobby) {
-            abort(404, 'No active workspace found.');
+        $lobby->load(['channels', 'members', 'tasks']);
+
+        $currentChannel = $lobby->channels->first();
+
+        if (!$currentChannel) {
+            $currentChannel = $lobby->channels()->create([
+                'name' => 'general'
+            ]);
         }
 
-        return view('task.index', compact('lobby'));
+        return view('task.index', compact('lobby', 'currentChannel'));
     }
 
     public function store(Request $request, Lobby $lobby)
     {
+        if (!auth()->user()->lobbies->contains($lobby->id)) {
+            abort(403, 'Unauthorized workspace access.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id',
         ]);
 
-        // Constructing through the relation automatically injects the correct parent 'lobby_id'
         $lobby->tasks()->create([
             'title' => $validated['title'],
             'user_id' => $validated['user_id'],
@@ -40,25 +49,24 @@ class TaskController extends Controller
         return back()->with('success', 'Task added.');
     }
 
-    /**
-     * MODIFIED: Handles both frontend AJAX payload actions AND dynamic modal form submissions smoothly.
-     */
     public function update(Request $request, Task $task)
     {
-        // Fallback or explicit check if target task modification matches structural permissions
-        // Note: Removed tight Auth matching constraint here so partners can edit each others' workspace details.
+        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['error' => 'Unauthorized workspace'], 403);
+            }
+            abort(403, 'Unauthorized workspace access.');
+        }
 
         $validated = $request->validate([
             'title'    => 'sometimes|string|max:255',
             'user_id'  => 'sometimes|exists:users,id',
             'status'   => 'sometimes|string|in:todo,progress,done',
-            'date'     => 'sometimes|nullable|date',
             'due_date' => 'sometimes|nullable|date',
         ]);
 
         $task->update($validated);
 
-        // If requested through standard form UI layout submission, return full page redirect layout context
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json($task);
         }
@@ -66,26 +74,27 @@ class TaskController extends Controller
         return redirect()->back()->with('success', 'Task properties successfully saved.');
     }
 
-    /**
-     * MODIFIED: Handles fallback state checking if request expects structural clean HTML redirect.
-     */
     public function destroy(Task $task)
     {
+        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+            abort(403, 'Unauthorized workspace access.');
+        }
+
         $task->delete();
 
         if (request()->expectsJson() || request()->wantsJson()) {
             return response()->json(['success' => true]);
         }
 
-        return redirect()->back()->with('success', 'Task card removed from board ecosystem.');
+        return redirect()->back()->with('success', 'Task card removed from board.');
     }
 
-    /**
-     * PRESERVED ORIGINAL: Asynchronous state update pipeline mechanism for Drag/Drop pipeline mutations.
-     */
     public function updateStatus(Request $request, Task $task): JsonResponse
     {
-        // Validate matching your exact database enum options
+        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+            return response()->json(['error' => 'Unauthorized workspace'], 403);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:todo,progress,done',
         ]);
@@ -98,5 +107,20 @@ class TaskController extends Controller
             'success' => true,
             'message' => 'Task pipeline layout successfully saved to database.'
         ]);
+    }
+
+    public function updateDueDate(Request $request, Task $task): JsonResponse
+    {
+        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+            return response()->json(['error' => 'Unauthorized workspace'], 403);
+        }
+
+        $validated = $request->validate([
+            'due_date' => 'required|date',
+        ]);
+
+        $task->update(['due_date' => $validated['due_date']]);
+
+        return response()->json(['success' => true]);
     }
 }

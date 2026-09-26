@@ -89,14 +89,11 @@
     <div id="theme-root" class="theme-blue bg-slate-950 h-screen h-[100dvh] text-stone-100 flex flex-col lg:flex-row selection:bg-rose-500/30 selection:text-rose-300 overflow-hidden relative">
         
         {{-- --- FIXED MOBILE HEADER --- --}}
-        <div class="w-full lg:hidden px-4 sm:px-6 py-3.5 bg-slate-900 border-b border-slate-950 flex items-center justify-between shrink-0 z-10 shadow-md">
-            <div>
-                <h3 class="text-sm font-bold text-white"># {{ $currentChannel?->name ?? 'Lobby' }}</h3>
-            </div>
-
+        <div class="flex items-center justify-between p-4 lg:hidden bg-slate-900 border-b border-[rgb(var(--brand-border))]/60 shrink-0">
+            <h2 class="text-md font-bold text-white truncate">{{ $lobby->name }}</h2>
             <div class="flex items-center gap-2">
                 {{-- Task Board Link Button --}}
-                <a href="{{ route('task.index') }}" 
+                <a href="{{ route('tasks.index', $lobby->id) }}"
                    class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-stone-300 hover:text-white text-xs font-medium rounded-xl transition-all shadow-md active:scale-95">
                     <svg class="w-3.5 h-3.5 text-[rgb(var(--brand-text))]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -105,19 +102,19 @@
                 </a>
 
                 @if($currentChannel)
-                    <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
-                       class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Join Huddle
-                    </a>
+                <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
+                   class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Join Huddle
+                </a>
                 @endif
             </div>
         </div>
 
         {{-- --- SIDEBAR --- --}}
-        <div class="w-full lg:w-80 bg-slate-900 border-b lg:border-b-0 lg:border-r border-[rgb(var(--brand-border))]/60 p-6 flex flex-col justify-between shrink-0 overflow-y-auto max-h-[35vh] lg:max-h-none lg:h-full shadow-lg transition-all duration-300">
+        <div class="w-full lg:w-80 bg-slate-900 border-b lg:border-b-0 lg:border-r border-[rgb(var(--brand-border))]/60 p-6 flex flex-col justify-between shrink-0 overflow-y-auto max-h-[45vh] lg:max-h-none lg:h-full shadow-lg transition-all duration-300">
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
                     <a href="{{ route('dashboard') }}" class="px-3 py-1.5 bg-slate-950 hover:bg-[rgb(var(--brand-bg-accent))]/20 border border-slate-800 hover:border-[rgb(var(--brand-primary))]/40 text-stone-400 hover:text-[rgb(var(--brand-text))] rounded-xl transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 shadow-inner">
@@ -136,6 +133,17 @@
                     <p class="text-[11px] text-stone-400 mt-1 leading-relaxed">
                         Goal: <span class="text-[rgb(var(--brand-text))]/90 font-medium">{{ $lobby->project_goal }}</span>
                     </p>
+                </div>
+
+                {{-- Unified Actions Area --}}
+                <div class="hidden lg:flex flex-col gap-2">
+                    <a href="{{ route('tasks.index', $lobby->id) }}"
+                       class="flex items-center justify-center gap-2 w-full py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-stone-300 hover:text-white text-xs font-semibold rounded-xl transition-all shadow-md active:scale-95">
+                        <svg class="w-4 h-4 text-[rgb(var(--brand-text))]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Workspace Task Board
+                    </a>
                 </div>
 
                 <div class="h-[1px] bg-gradient-to-r from-[rgb(var(--brand-border))]/60 via-slate-800 to-transparent"></div>
@@ -172,11 +180,16 @@
 
                 <div class="h-[1px] bg-gradient-to-r from-[rgb(var(--brand-border))]/60 via-slate-800 to-transparent"></div>
 
+                {{-- --- ROSTER SECTION (NOW COLLAPSIBLE) --- --}}
                 <div>
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">
-                        Workspace Roster ({{ $lobby->members->count() }})
-                    </h3>
-                    <div class="space-y-2 max-h-32 lg:max-h-48 overflow-y-auto pr-1">
+                    <button id="roster-toggle-btn" class="flex items-center justify-between w-full text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 hover:text-stone-200 transition-colors focus:outline-none">
+                        <span>Workspace Roster ({{ $lobby->members->count() }})</span>
+                        <svg id="roster-arrow" class="w-3.5 h-3.5 transform transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    
+                    <div id="roster-collapse-wrapper" class="space-y-2 max-h-32 lg:max-h-48 overflow-y-auto pr-1 transition-all duration-200">
                         @foreach($lobby->members as $member)
                             <div class="flex items-center justify-between p-2 bg-slate-950/40 border border-slate-800/60 rounded-xl hover:border-[rgb(var(--brand-border))]/50 transition-colors">
                                 <div class="flex items-center gap-2 truncate">
@@ -223,15 +236,7 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
-                        {{-- Task Board Link Button --}}
-                        <a href="{{ route('task.index') }}" 
-                           class="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-850 hover:border-[rgb(var(--brand-border))]/60 text-stone-300 hover:text-white text-xs font-semibold rounded-xl transition-all shadow-md active:scale-95">
-                            <svg class="w-3.5 h-3.5 text-[rgb(var(--brand-text))]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                            Task Board
-                        </a>
-
+                        {{-- Clean Huddle access button (Deduplicated loop removed) --}}
                         <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}" 
                            class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -326,6 +331,25 @@
     </div>
 
     <script>
+        // --- Roster Expandable/Collapsible Toggle Module ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const rosterToggle = document.getElementById('roster-toggle-btn');
+            const rosterWrapper = document.getElementById('roster-collapse-wrapper');
+            const rosterArrow = document.getElementById('roster-arrow');
+            
+            if (rosterToggle && rosterWrapper && rosterArrow) {
+                rosterToggle.addEventListener('click', () => {
+                    if (rosterWrapper.classList.contains('hidden')) {
+                        rosterWrapper.classList.remove('hidden');
+                        rosterArrow.classList.remove('rotate-180');
+                    } else {
+                        rosterWrapper.classList.add('hidden');
+                        rosterArrow.classList.add('rotate-180');
+                    }
+                });
+            }
+        });
+
         // --- 1. Immediate Theme Engine Initialization ---
         const themeRoot = document.getElementById('theme-root');
         const themeToggleBtn = document.getElementById('theme-toggle-btn');

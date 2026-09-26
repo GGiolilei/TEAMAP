@@ -23,6 +23,7 @@
 </style>
 
 <script>
+    
 function playNotificationSound() {
     const sound = document.getElementById('chatNotificationSound');
     if (!sound) return;
@@ -44,8 +45,12 @@ function playNotificationSound() {
         $pendingCount = isset($ownedLobbiesWithRequests) ? $ownedLobbiesWithRequests->sum(fn($lobby) => $lobby->members->count()) : 0;
     @endphp
 
-    <div class="relative w-full max-w-7xl bg-slate-900/40 border border-slate-800/80 rounded-[2.5rem] p-6 backdrop-blur-md grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-6 auto-rows-max min-h-[85vh]">
+    {{-- REAL-TIME TOAST COMPONENT --}}
+    <x-notification-toast />
 
+    {{-- MAIN DASHBOARD CARD --}}
+    <div class="relative w-full max-w-7xl bg-slate-900/40 border border-slate-800/80 rounded-[2.5rem] p-6 backdrop-blur-md grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-6 auto-rows-max min-h-[85vh]">
+        
         {{-- ===================== LEFT SIDEBAR NAV ===================== --}}
         <div class="flex lg:flex-col items-center justify-between lg:justify-start gap-6 p-4 rounded-3xl bg-slate-950/60 border border-slate-800/80 lg:py-8 lg:h-full">
             <div class="flex lg:flex-col items-center gap-5 w-full justify-center">
@@ -65,7 +70,7 @@ function playNotificationSound() {
                     </svg>
                 </a>
 
-                {{-- NOTIFICATION BUTTON — single job: opens the modal. Badge is updated live by JS below. --}}
+                {{-- NOTIFICATION BUTTON --}}
                 <button id="notifBtn" type="button" title="Notifications"
                         class="relative p-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200 hover:scale-105 transition-all duration-200 flex items-center justify-center w-12 h-12 {{ $pendingCount > 0 ? 'bell-wiggle' : '' }}">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -81,12 +86,15 @@ function playNotificationSound() {
 
             {{-- Logout --}}
             <div class="lg:mt-auto">
-                <button type="button" onclick="event.preventDefault();" title="Logout"
-                        class="p-3 rounded-2xl bg-slate-900/40 border border-slate-800/40 text-slate-600 hover:text-rose-400 hover:border-rose-500/20 transition-all duration-200 flex items-center justify-center w-12 h-12">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                </button>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" title="Logout"
+                            class="p-3 rounded-2xl bg-slate-900/40 border border-slate-800/40 text-slate-600 hover:text-rose-400 hover:border-rose-500/20 transition-all duration-200 flex items-center justify-center w-12 h-12">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -293,7 +301,7 @@ function playNotificationSound() {
                         </div>
                         <button type="button" onclick="document.getElementById('notifBtn').click()" class="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 text-center hover:border-indigo-500/40 hover:scale-105 transition-all duration-200">
                             <span class="block text-[10px] text-slate-500">Pending Requests</span>
-                            <span class="text-xs font-bold block mt-1 {{ $pendingCount > 0 ? 'text-amber-400' : 'text-slate-400' }}">
+                            <span id="pendingRequestsCount" class="text-xs font-bold block mt-1 {{ $pendingCount > 0 ? 'text-amber-400' : 'text-slate-400' }}">
                                 {{ $pendingCount }}
                             </span>
                         </button>
@@ -309,80 +317,82 @@ function playNotificationSound() {
 
         </div>
 
-    </div>
+    </div> {{-- /MAIN DASHBOARD CARD --}}
 
-    {{-- FLOATING CREATE BUTTON --}}
-    <a href="{{ route('lobby.create') }}"
-       class="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all duration-200">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        New Lobby
-    </a>
+</div> {{-- /PAGE WRAPPER --}}
 
-    {{-- NOTIFICATIONS MODAL --}}
-    <div id="notifModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div id="notifBackdrop" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+{{-- FLOATING CREATE BUTTON --}}
+<a href="{{ route('lobby.create') }}"
+   class="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all duration-200">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    New Lobby
+</a>
 
-        <div class="modal-panel relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800/80">
-                <h3 class="text-sm font-bold text-slate-100">Incoming Requests</h3>
-                <button id="notifClose" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+{{-- NOTIFICATIONS MODAL --}}
+<div id="notifModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div id="notifBackdrop" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
 
-            <div class="p-5 space-y-3 overflow-y-auto">
-                @if($pendingCount > 0)
-                    @foreach($ownedLobbiesWithRequests as $lobby)
-                        @foreach($lobby->members as $applicant)
-                            <div class="flex items-center justify-between gap-3 p-4 bg-slate-950/70 border border-slate-800 rounded-xl transition-all duration-200 hover:border-indigo-500/30">
-                                <div class="min-w-0">
-                                    <p class="text-[11px] text-slate-500 truncate">
-                                        Target Lobby: <span class="text-indigo-400 font-medium">{{ $lobby->name }}</span>
-                                    </p>
-                                    <p class="text-sm font-semibold text-slate-100 mt-0.5">
-                                        {{ $applicant->name }}
-                                    </p>
-                                </div>
+    <div class="modal-panel relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800/80">
+            <h3 class="text-sm font-bold text-slate-100">Incoming Requests</h3>
+            <button id="notifClose" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
-                                <div class="flex items-center gap-2 shrink-0">
-                                    @if($applicant->profile?->cv_path)
-                                        <a href="{{ route('lobby.member.cv', [$lobby->id, $applicant->id]) }}"
-                                           target="_blank"
-                                           class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:scale-105 transition-all duration-200">
-                                            CV
-                                        </a>
-                                    @endif
-
-                                    <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'accepted']) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 hover:scale-105 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all duration-200">
-                                            Approve
-                                        </button>
-                                    </form>
-
-                                    <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'rejected']) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 border border-slate-700 hover:border-rose-900/60 hover:scale-105 transition-all duration-200">
-                                            Reject
-                                        </button>
-                                    </form>
-                                </div>
+        <div class="p-5 space-y-3 overflow-y-auto">
+            @if($pendingCount > 0)
+                @foreach($ownedLobbiesWithRequests as $lobby)
+                    @foreach($lobby->members as $applicant)
+                        <div class="flex items-center justify-between gap-3 p-4 bg-slate-950/70 border border-slate-800 rounded-xl transition-all duration-200 hover:border-indigo-500/30">
+                            <div class="min-w-0">
+                                <p class="text-[11px] text-slate-500 truncate">
+                                    Target Lobby: <span class="text-indigo-400 font-medium">{{ $lobby->name }}</span>
+                                </p>
+                                <p class="text-sm font-semibold text-slate-100 mt-0.5">
+                                    {{ $applicant->name }}
+                                </p>
                             </div>
-                        @endforeach
+
+                            <div class="flex items-center gap-2 shrink-0">
+                                @if($applicant->profile?->cv_path)
+                                    <a href="{{ route('lobby.member.cv', [$lobby->id, $applicant->id]) }}"
+                                       target="_blank"
+                                       class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:scale-105 transition-all duration-200">
+                                        CV
+                                    </a>
+                                @endif
+
+                                <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'accepted']) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 hover:scale-105 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all duration-200">
+                                        Approve
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'rejected']) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 border border-slate-700 hover:border-rose-900/60 hover:scale-105 transition-all duration-200">
+                                        Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     @endforeach
-                @else
-                    <div class="text-center py-10 text-sm text-slate-500">
-                        No pending requests right now.
-                    </div>
-                @endif
-            </div>
+                @endforeach
+            @else
+                <div class="text-center py-10 text-sm text-slate-500">
+                    No pending requests right now.
+                </div>
+            @endif
         </div>
     </div>
-
 </div>
 
 <script>
@@ -408,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') closeNotifModal();
     });
 
-    // ---- Desktop push permission — asked quietly on first click anywhere, not on the bell ----
+    // Desktop push permission
     function requestDesktopPermission() {
         if (!('Notification' in window) || Notification.permission !== 'default') return;
         Notification.requestPermission();
@@ -424,9 +434,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // ---- Live badge (lobby requests + unread chat) via SSE ----
+    // Live badge & stats update
     function renderBadge(count) {
         let badge = document.getElementById('notifBadge');
+        const pendingRequestsText = document.getElementById('pendingRequestsCount');
+
+        if (pendingRequestsText) {
+            pendingRequestsText.textContent = count;
+            pendingRequestsText.className = `text-xs font-bold block mt-1 ${count > 0 ? 'text-amber-400' : 'text-slate-400'}`;
+        }
+
         if (count > 0) {
             if (!badge) {
                 badge = document.createElement('span');
@@ -444,25 +461,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastTotal = {{ $pendingCount }};
 
-    if (typeof EventSource !== 'undefined') {
-        const source = new EventSource('{{ route('notifications.stream') }}');
-        source.addEventListener('update', (e) => {
-            const data = JSON.parse(e.data);
-            const total = data.pending + data.unread;
-            renderBadge(total);
-            if (total > lastTotal) {
-                playNotificationSound();
-                spawnPushNotification(
-                    'New activity',
-                    data.unread > 0 ? 'You have new chat messages.' : 'You have a new lobby request.'
-                );
+    // Solution A: Polling data every 0.5s (500ms) seamlessly without refreshing the browser tab
+    async function fetchNotificationUpdates() {
+        try {
+            const response = await fetch('{{ route("notifications.stream") }}', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const total = (data.pending || 0) + (data.unread || 0);
+                renderBadge(total);
+
+                if (total > lastTotal) {
+                    playNotificationSound();
+                    spawnPushNotification(
+                        'New activity',
+                        data.unread > 0 ? 'You have new chat messages.' : 'You have a new lobby request.'
+                    );
+                }
+                lastTotal = total;
             }
-            lastTotal = total;
-        });
-        source.onerror = () => { /* browser retries automatically */ };
+        } catch (err) {
+            // Quietly catch background network blips
+        }
     }
 
-    // ---- Lobby card tilt ----
+    // Polling timer set to every 0.5s (500 milliseconds)
+    setInterval(fetchNotificationUpdates, 500);
+
+    // Initial check
+    fetchNotificationUpdates();
+
+    // Lobby card 3D tilt effect
     document.querySelectorAll('.lobby-card').forEach(card => {
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();

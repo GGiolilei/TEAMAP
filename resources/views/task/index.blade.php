@@ -5,7 +5,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 shrink-0">
             <div>
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('chat.index', ['lobby' => $lobby->id]) }}" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-stone-400 hover:text-white rounded-xl transition-all text-xs font-semibold">
+                    <a href="{{ route('chat.index', ['lobby' => $lobby->id, 'channel' => $currentChannel->id]) }}" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-stone-400 hover:text-white rounded-xl transition-all text-xs font-semibold">
                         ← Back to Chat Lobby
                     </a>
                 </div>
@@ -280,45 +280,44 @@
             ev.currentTarget.classList.remove('border-indigo-500', 'bg-slate-800');
         }
 
-       async function dropMemberOnCard(ev, taskId) {
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.currentTarget.classList.remove('border-indigo-500', 'bg-slate-800');
+        async function dropMemberOnCard(ev, taskId) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            ev.currentTarget.classList.remove('border-indigo-500', 'bg-slate-800');
 
-    if (activeDragType !== 'member') return;
+            if (activeDragType !== 'member') return;
 
-    const memberId = draggedData.memberId;
-    const memberName = draggedData.memberName;
+            const memberId = draggedData.memberId;
+            const memberName = draggedData.memberName;
 
-    const wrapperElement = document.getElementById(`task-card-${taskId}`);
-    if (wrapperElement) {
-        const assigneePlaceholder = wrapperElement.querySelector('.task-assignee-name');
-        if (assigneePlaceholder) {
-            assigneePlaceholder.textContent = "👤 " + memberName;
-            assigneePlaceholder.className = 'task-assignee-name text-indigo-400 font-semibold text-xs';
+            const wrapperElement = document.getElementById(`task-card-${taskId}`);
+            if (wrapperElement) {
+                const assigneePlaceholder = wrapperElement.querySelector('.task-assignee-name');
+                if (assigneePlaceholder) {
+                    assigneePlaceholder.textContent = "👤 " + memberName;
+                    assigneePlaceholder.className = 'task-assignee-name text-indigo-400 font-semibold text-xs';
+                }
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                await fetch(`/tasks/${taskId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken || '',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ 
+                        _method: 'PUT',
+                        user_id: memberId 
+                    })
+                });
+            } catch (err) {
+                console.error("Communication failure synchronizing mutations:", err);
+            }
         }
-    }
-
-    // FIX: Send via PUT to your general update route and include a spoofed header or method parameter
-    try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        await fetch(`/tasks/${taskId}`, {
-            method: 'POST', // standard HTML wrapper behavior
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json', // Force laravel to handle it as JSON response
-                'X-CSRF-TOKEN': csrfToken || '',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ 
-                _method: 'PUT', // Spoof the PUT method for Laravel's Route::put
-                user_id: memberId 
-            })
-        });
-    } catch (err) {
-        console.error("Communication failure synchronizing mutations:", err);
-    }
-}
 
         // 4. CALENDAR DROPS
         function allowCalendarDrop(ev) {
@@ -341,7 +340,6 @@
             const card = document.getElementById(`task-card-${taskId}`);
             if (!card) return;
 
-            // Remove existing calendar marker if any
             const existingMarker = document.getElementById(`cal-marker-${taskId}`);
             if (existingMarker) existingMarker.remove();
 
