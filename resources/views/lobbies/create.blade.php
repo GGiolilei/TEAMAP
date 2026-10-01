@@ -70,14 +70,17 @@
                     </div>
 
                     <div class="mt-6 border-t border-slate-800/80 pt-5">
-                        <label class="block text-xs font-semibold text-indigo-400 uppercase tracking-wider">Project Categories & Focus Tags</label>
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-indigo-400 uppercase tracking-wider">Project Categories & Focus Tags</label>
+                            <span id="interest-counter" class="text-xs font-semibold text-slate-400 transition">0 / 5</span>
+                        </div>
                         <p class="text-xs text-slate-400 mt-0.5 mb-3">
-                            Select related tags so people with matching interest profiles can discover your lobby instantly.
+                            Select up to 5 related tags so people with matching interest profiles can discover your lobby instantly.
                         </p>
                         
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-950 rounded-xl border border-slate-800/80 shadow-inner">
+                        <div id="interest-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-950 rounded-xl border border-slate-800/80 shadow-inner">
                             @foreach(\App\Models\Interest::all() as $interest)
-                                <label class="flex items-center space-x-2.5 bg-slate-900 border border-slate-800/60 p-2.5 rounded-lg cursor-pointer hover:border-indigo-500/30 transition shadow-sm group">
+                                <label class="interest-item flex items-center space-x-2.5 bg-slate-900 border border-slate-800/60 p-2.5 rounded-lg cursor-pointer hover:border-indigo-500/30 transition shadow-sm group">
                                     <input type="checkbox" name="interests[]" value="{{ $interest->id }}"
                                            {{ is_array(old('interests')) && in_array($interest->id, old('interests')) ? 'checked' : '' }}
                                            class="rounded bg-slate-950 border-slate-800 text-indigo-500 focus:ring-indigo-500/20 focus:ring-offset-0 w-4 h-4 cursor-pointer">
@@ -102,4 +105,41 @@
 
         </div>
     </div>
+
+    <script>
+        (function () {
+            const MAX = 5;
+            const grid = document.getElementById('interest-grid');
+            const counter = document.getElementById('interest-counter');
+            const boxes = grid.querySelectorAll('input[type="checkbox"]');
+
+            function refresh() {
+                const count = grid.querySelectorAll('input:checked').length;
+                counter.textContent = count + ' / ' + MAX;
+                counter.classList.toggle('text-indigo-400', count === MAX);
+                counter.classList.toggle('text-slate-400', count !== MAX);
+
+                // dim unchecked tags once the limit is hit
+                boxes.forEach(box => {
+                    const dim = count >= MAX && !box.checked;
+                    box.closest('.interest-item').classList.toggle('opacity-40', dim);
+                    box.closest('.interest-item').classList.toggle('cursor-not-allowed', dim);
+                });
+            }
+
+            boxes.forEach(box => {
+                // block the click itself if it would make a 6th
+                box.addEventListener('click', function (e) {
+                    if (box.checked && grid.querySelectorAll('input:checked').length > MAX) {
+                        e.preventDefault();
+                        counter.classList.add('text-rose-400');
+                        setTimeout(() => counter.classList.remove('text-rose-400'), 600);
+                    }
+                });
+                box.addEventListener('change', refresh);
+            });
+
+            refresh();
+        })();
+    </script>
 </x-app-layout>
