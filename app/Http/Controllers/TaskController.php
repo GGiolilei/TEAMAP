@@ -12,10 +12,25 @@ use Illuminate\Http\JsonResponse;
 class TaskController extends Controller
 {
     /**
-     * Display the Kanban task board view with workspace layout payloads.
+     * Helper to verify if the authenticated user belongs to or owns the lobby.
      */
+    private function authorizeLobbyAccess(Lobby $lobby): void
+    {
+        $userId = auth()->id();
+
+        // Check if user is the owner OR attached as a member
+        $isMemberOrOwner = $lobby->owner_id === $userId 
+            || $lobby->members()->where('users.id', $userId)->exists();
+
+        if (!$isMemberOrOwner) {
+            abort(403, 'Unauthorized workspace access.');
+        }
+    }
+
     public function index(Lobby $lobby)
     {
+        $this->authorizeLobbyAccess($lobby);
+
         $lobby->load(['channels', 'members', 'tasks']);
 
         $currentChannel = $lobby->channels->first();
@@ -31,9 +46,7 @@ class TaskController extends Controller
 
     public function store(Request $request, Lobby $lobby)
     {
-        if (!auth()->user()->lobbies->contains($lobby->id)) {
-            abort(403, 'Unauthorized workspace access.');
-        }
+        $this->authorizeLobbyAccess($lobby);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -51,7 +64,13 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+        $lobby = $task->lobby;
+
+        $userId = auth()->id();
+        $isMemberOrOwner = $lobby->owner_id === $userId 
+            || $lobby->members()->where('users.id', $userId)->exists();
+
+        if (!$isMemberOrOwner) {
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json(['error' => 'Unauthorized workspace'], 403);
             }
@@ -76,9 +95,7 @@ class TaskController extends Controller
 
     public function destroy(Task $task)
     {
-        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
-            abort(403, 'Unauthorized workspace access.');
-        }
+        $this->authorizeLobbyAccess($task->lobby);
 
         $task->delete();
 
@@ -91,7 +108,13 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task): JsonResponse
     {
-        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+        $lobby = $task->lobby;
+
+        $userId = auth()->id();
+        $isMemberOrOwner = $lobby->owner_id === $userId 
+            || $lobby->members()->where('users.id', $userId)->exists();
+
+        if (!$isMemberOrOwner) {
             return response()->json(['error' => 'Unauthorized workspace'], 403);
         }
 
@@ -111,7 +134,13 @@ class TaskController extends Controller
 
     public function updateDueDate(Request $request, Task $task): JsonResponse
     {
-        if (!auth()->user()->lobbies->contains($task->lobby_id)) {
+        $lobby = $task->lobby;
+
+        $userId = auth()->id();
+        $isMemberOrOwner = $lobby->owner_id === $userId 
+            || $lobby->members()->where('users.id', $userId)->exists();
+
+        if (!$isMemberOrOwner) {
             return response()->json(['error' => 'Unauthorized workspace'], 403);
         }
 

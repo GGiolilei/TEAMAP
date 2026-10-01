@@ -64,6 +64,7 @@ class LobbyController extends Controller
 
         // 3. Attach the chosen interest tags to the database pivot table
         $lobby->interests()->attach($request->interests);
+        $lobby->members()->attach(auth()->id());
 
         // 4. Redirect cleanly back to the workspace dashboard
         return redirect()->route('dashboard')->with('success', 'Your new project lobby has been launched successfully!');
