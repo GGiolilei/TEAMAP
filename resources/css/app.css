@@ -1,3 +1,57 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --c-bg: #F7F7F5;
+  --c-surface: #FFFFFF;
+  --c-fg: #242524;
+  --c-fg-strong: #202120;
+  --c-fg-2: #747674;
+  --c-muted: #9A9C9A;
+  --c-line: #E1E1DE;
+  --c-hover: #EEEEEC;
+  --c-selected: #E5E5E2;
+  --c-btn: #252625;
+  --c-btn-hover: #3A3B3A;
+  --c-btn-text: #FFFFFF;
+  --c-bubble-me: #E9E9E7;
+  --c-bubble-other: #F4F4F2;
+}
+
+.dark {
+  --c-bg: #121312;
+  --c-surface: #1A1B1A;
+  --c-fg: #ECECEA;
+  --c-fg-strong: #F7F7F5;
+  --c-fg-2: #A8AAA8;
+  --c-muted: #7C7E7C;
+  --c-line: #2E2F2E;
+  --c-hover: #242524;
+  --c-selected: #2F302F;
+  --c-btn: #ECECEA;
+  --c-btn-hover: #FFFFFF;
+  --c-btn-text: #202120;
+  --c-bubble-me: #2E2F2E;
+  --c-bubble-other: #232423;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-fg: var(--c-fg);
+  --color-fg-strong: var(--c-fg-strong);
+  --color-fg-2: var(--c-fg-2);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-hover: var(--c-hover);
+  --color-selected: var(--c-selected);
+  --color-btn: var(--c-btn);
+  --color-btn-hover: var(--c-btn-hover);
+  --color-btn-text: var(--c-btn-text);
+  --color-bubble-me: var(--c-bubble-me);
+  --color-bubble-other: var(--c-bubble-other);
+}
+
+[x-cloak] { display: none !important; }
