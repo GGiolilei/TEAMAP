@@ -9,6 +9,7 @@ use App\Http\Controllers\LobbyMembershipController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskController;
 
 /*
@@ -17,7 +18,9 @@ use App\Http\Controllers\TaskController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return view('welcome');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
 /*
