@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +10,7 @@ class Task extends Model
         'title',
         'status',
         'user_id',
-        'lobby_id',
-        'due_date',
-    ];
-
-    protected $casts = [
-        'due_date' => 'date',
+        'lobby_id', // <-- Must be present here
     ];
 
     public function lobby(): BelongsTo
