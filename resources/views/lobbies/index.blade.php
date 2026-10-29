@@ -1,110 +1,251 @@
 <x-app-layout>
-    <div class="py-10 bg-slate-950 min-h-screen text-slate-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-                <div>
-                    <h1 class="text-2xl font-black tracking-tight text-slate-100 sm:text-3xl">Project Lobbies</h1>
-                    <p class="text-sm text-slate-400 mt-1">Discover, join, or manage custom collaboration workspaces.</p>
-                </div>
-                <a href="{{ route('lobbies.create') }}" class="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition duration-200 shadow-md shadow-indigo-950/50 shrink-0 gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+<style>
+    /* ---------- Splash ---------- */
+    #lobby-splash {
+        position: fixed; inset: 0; z-index: 100;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+        background: var(--bg);
+        transition: opacity .6s ease, visibility .6s ease;
+    }
+    #lobby-splash.hide { opacity: 0; visibility: hidden; }
+    #lobby-splash .logo-wrap {
+        position: relative; width: 112px; height: 112px; display: grid; place-items: center;
+        border-radius: 32px; background: var(--surface); border: 1px solid var(--border);
+        box-shadow: 0 20px 40px -20px rgba(32,33,32,.25);
+        animation: l-pop .8s cubic-bezier(.2,.9,.3,1.2) both;
+    }
+    #lobby-splash .logo-wrap::before {
+        content: ""; position: absolute; inset: -14px; border-radius: 42px;
+        border: 1px solid var(--border); animation: l-ring 2s ease-out infinite;
+    }
+    #lobby-splash img { width: 64px; height: 64px; object-fit: contain; }
+    #lobby-splash .name {
+        font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; color: var(--black);
+        animation: l-rise .7s .25s ease both;
+    }
+    #lobby-splash .bar { width: 120px; height: 3px; border-radius: 999px; background: var(--selected); overflow: hidden; animation: l-rise .7s .35s ease both; }
+    #lobby-splash .bar i { display: block; height: 100%; background: var(--black); transform-origin: left; transform: scaleX(0); animation: l-load 1.6s .3s cubic-bezier(.6,0,.2,1) forwards; }
+    @keyframes l-pop  { from { opacity: 0; transform: scale(.6) } to { opacity: 1; transform: scale(1) } }
+    @keyframes l-rise { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+    @keyframes l-ring { 0% { opacity: .8; transform: scale(.92) } 100% { opacity: 0; transform: scale(1.25) } }
+    @keyframes l-load { to { transform: scaleX(1) } }
+
+    /* ---------- Page ---------- */
+    .fade-up { opacity: 0; transform: translateY(14px); animation: l-rise .6s ease forwards; }
+
+    .l-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; }
+    .l-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 44px; padding: 0 18px; border-radius: 14px;
+        font-size: .875rem; font-weight: 700; transition: background .15s, color .15s, transform .1s, border-color .15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .l-btn:active { transform: scale(.96); }
+    .l-btn-primary { background: var(--btn); color: #fff; }
+    .l-btn-primary:hover { background: var(--black-2); }
+    .l-btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .l-btn-ghost:hover { background: var(--btn); color: #fff; border-color: var(--btn); }
+
+    /* Lobby cards */
+    .lobby {
+        position: relative; display: flex; flex-direction: column; overflow: hidden;
+        transition: transform .25s cubic-bezier(.2,.9,.3,1.2), box-shadow .25s ease, border-color .2s;
+    }
+    .lobby:hover { transform: translateY(-6px) rotate(-.4deg); box-shadow: 0 24px 40px -24px rgba(32,33,32,.35); border-color: var(--muted); }
+
+    .tone-0 { --tone: var(--info);    --tone-bg: var(--info-bg); }
+    .tone-1 { --tone: var(--success); --tone-bg: var(--success-bg); }
+    .tone-2 { --tone: var(--warning); --tone-bg: var(--warning-bg); }
+    .tone-3 { --tone: var(--mention); --tone-bg: color-mix(in srgb, var(--mention) 14%, #fff); }
+
+    .lobby-banner {
+        position: relative; height: 84px; background: var(--tone-bg); overflow: hidden;
+    }
+    .lobby-banner::before, .lobby-banner::after {
+        content: ""; position: absolute; border-radius: 999px; background: var(--tone); opacity: .12;
+    }
+    .lobby-banner::before { width: 120px; height: 120px; right: -30px; top: -50px; }
+    .lobby-banner::after  { width: 70px;  height: 70px;  right: 70px; bottom: -40px; }
+
+    .lobby-emoji {
+        position: absolute; left: 20px; top: 52px; z-index: 2;
+        display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px;
+        background: var(--surface); border: 1px solid var(--border); font-size: 1.65rem;
+        box-shadow: 0 10px 20px -12px rgba(32,33,32,.4);
+        transition: transform .3s cubic-bezier(.2,.9,.3,1.6);
+    }
+    .lobby:hover .lobby-emoji { transform: rotate(-10deg) scale(1.12); }
+
+    .avatar {
+        display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px;
+        border: 2px solid var(--surface); background: var(--bubble-me); color: var(--black);
+        font-size: .6875rem; font-weight: 800; text-transform: uppercase; margin-left: -8px;
+    }
+    .avatar:first-child { margin-left: 0; }
+    .avatar.more { background: var(--btn); color: #fff; }
+
+    @media (prefers-reduced-motion: reduce) {
+        #lobby-splash *, .fade-up { animation: none !important; opacity: 1; transform: none; }
+        .lobby, .lobby-emoji { transition: none; }
+    }
+</style>
+
+@php
+    $emojis = ['🚀', '🎨', '🧠', '🛠️', '🌱', '🎮', '☕', '🔭', '📚', '⚡'];
+@endphp
+
+{{-- Splash screen (once per session) --}}
+<div id="lobby-splash">
+    <div class="logo-wrap">
+        <img src="{{ asset('image/teamapio.png') }}" alt="TeaMap">
+    </div>
+    <div class="name">TeaMap</div>
+    <div class="bar"><i></i></div>
+</div>
+
+<div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 pb-14 sm:px-6 lg:px-8 lg:py-8">
+
+    {{-- HEADER --}}
+    <section class="fade-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-(--black) sm:text-4xl">Project Lobbies <span class="inline-block"></span></h1>
+            <p class="mt-1.5 text-base text-(--text-2)">Discover, join, or manage custom collaboration workspaces.</p>
+        </div>
+        <a href="{{ route('lobbies.create') }}" class="l-btn l-btn-primary shrink-0">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Create New Lobby
+        </a>
+    </section>
+
+    {{-- SEARCH --}}
+    <section class="l-card fade-up p-3 sm:p-4" style="animation-delay:.08s">
+        <form method="GET" action="{{ route('lobby.index') }}">
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <svg class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-(--muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    Create New Lobby
-                </a>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
-                <form method="GET" action="{{ route('lobby.index') }}" class="space-y-4">
-                    <div class="relative flex items-center">
-                        <div class="absolute left-4 pointer-events-none text-slate-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                        <input type="text" name="search" value="{{ request('search') }}" 
-                               placeholder="Search all open lobbies by name, milestone metrics, or description keywords..." 
-                               class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring focus:ring-indigo-500/10 text-slate-200 placeholder-slate-500 text-sm pl-12 pr-24 py-3 rounded-xl shadow-inner transition" />
-                        
-                        <div class="absolute right-2.5">
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition duration-150 shadow">
-                                Search
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <div>
-                <div class="flex items-center gap-3 mb-6">
-                    <h3 class="text-base font-bold text-slate-200 tracking-tight">Available Openings</h3>
-                    <div class="h-[1px] flex-1 bg-gradient-to-r from-slate-800 to-transparent"></div>
-                    <span class="text-xs text-slate-500 font-mono">Showing {{ $lobbies->count() }} Writable Hubs</span>
+                    <input type="search" name="search" value="{{ request('search') }}" enterkeyhint="search"
+                           placeholder="Search by name, goal or keyword..."
+                           class="block min-h-12 w-full rounded-2xl border border-(--border) bg-(--bg) pl-12 pr-4 text-base text-(--text) outline-none transition placeholder:text-(--muted) focus:border-(--btn) focus:bg-(--surface) focus:ring-4 focus:ring-(--selected)">
                 </div>
+                <button type="submit" class="l-btn l-btn-primary !min-h-12">Search</button>
+            </div>
+        </form>
+    </section>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @forelse($lobbies as $lobby)
-                        <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between hover:border-slate-700/80 transition duration-300 shadow-lg group">
-                            
-                            <div>
-                                <div class="flex items-start justify-between gap-4 mb-3">
-                                    <h4 class="text-base font-bold text-slate-100 group-hover:text-indigo-400 transition truncate" title="{{ $lobby->name }}">
-                                        {{ $lobby->name }}
-                                    </h4>
-                                    
-                                    @if($lobby->owner_id === auth()->id())
-                                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                            Owner
-                                        </span>
-                                    @elseif($lobby->members->contains(auth()->id()))
-                                        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                            Joined
-                                        </span>
+    {{-- LIST --}}
+    <section class="space-y-5">
+        <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-bold tracking-tight text-(--black)">Available openings</h2>
+            <span class="rounded-full bg-(--selected) px-3 py-1 text-sm font-semibold tabular-nums text-(--black)">
+                {{ $lobbies->count() }} {{ \Illuminate\Support\Str::plural('lobby', $lobbies->count()) }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            @forelse($lobbies as $lobby)
+                @php
+                    $isOwner  = $lobby->owner_id === auth()->id();
+                    $isMember = $lobby->members->contains(auth()->id());
+                    $tone     = $lobby->id % 4;
+                    $emoji    = $emojis[$lobby->id % count($emojis)];
+                    $shown    = $lobby->members->take(3);
+                    $extra    = $lobby->members->count() - $shown->count();
+                @endphp
+
+                <article class="lobby l-card tone-{{ $tone }} fade-up" style="animation-delay: {{ min($loop->index, 8) * 60 + 150 }}ms">
+
+                    {{-- Banner --}}
+                    <div class="lobby-banner">
+                        @if($isOwner)
+                            <span class="absolute right-4 top-4 z-[1] rounded-full bg-(--warning-bg) px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-(--warning) ring-1 ring-inset ring-(--warning)/25">
+                                👑 Owner
+                            </span>
+                        @elseif($isMember)
+                            <span class="absolute right-4 top-4 z-[1] rounded-full bg-(--success-bg) px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-(--success) ring-1 ring-inset ring-(--success)/25">
+                                ✓ Joined
+                            </span>
+                        @endif
+                    </div>
+                    <div class="lobby-emoji" aria-hidden="true">{{ $emoji }}</div>
+
+                    {{-- Body --}}
+                    <div class="flex flex-1 flex-col px-5 pb-5 pt-10">
+                        <h3 class="truncate text-lg font-extrabold tracking-tight text-(--black)" title="{{ $lobby->name }}">
+                            {{ $lobby->name }}
+                        </h3>
+
+                        <p class="mt-1.5 line-clamp-3 text-sm leading-relaxed text-(--text-2)">
+                            {{ $lobby->description ?? 'No description provided for this specific configuration space.' }}
+                        </p>
+
+                        <div class="mt-4 rounded-2xl px-4 py-3" style="background: var(--tone-bg)">
+                            <span class="block text-[11px] font-extrabold uppercase tracking-wider" style="color: var(--tone)">🎯 Project goal</span>
+                            <p class="mt-0.5 line-clamp-1 text-sm font-semibold text-(--text)">{{ $lobby->project_goal }}</p>
+                        </div>
+
+                        <div class="mt-5 flex flex-1 items-end justify-between gap-3 border-t border-(--border) pt-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex items-center">
+                                    @foreach($shown as $member)
+                                        <span class="avatar" title="{{ $member->name }}">{{ substr($member->name, 0, 1) }}</span>
+                                    @endforeach
+                                    @if($extra > 0)
+                                        <span class="avatar more">+{{ $extra }}</span>
                                     @endif
                                 </div>
-                                
-                                <p class="text-slate-400 text-sm line-clamp-3 leading-relaxed mb-4">
-                                    {{ $lobby->description ?? 'No description provided for this specific configuration space.' }}
-                                </p>
-
-                                <div class="mb-4 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50 text-xs">
-                                    <span class="text-slate-500 block text-[10px] uppercase font-bold tracking-wider mb-0.5">Project Goal:</span>
-                                    <p class="text-slate-300 font-medium line-clamp-1">{{ $lobby->project_goal }}</p>
-                                </div>
+                                <span class="text-sm text-(--text-2)"><span class="font-bold tabular-nums text-(--text)">{{ $lobby->members->count() }}</span> members</span>
                             </div>
 
-                            <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs gap-4">
-                                <div class="flex items-center gap-1.5 text-slate-500">
-                                    <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5l-8-8 8-8"/>
-                                    </svg>
-                                    <span class="font-medium text-slate-400">{{ $lobby->members->count() }}</span> members
-                                </div>
-
-                                @if($lobby->owner_id === auth()->id() || $lobby->members->contains(auth()->id()))
-                                    <a href="{{ route('chat.index', $lobby->id) }}" class="inline-flex items-center gap-1 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 hover:border-indigo-500 text-indigo-400 hover:text-white font-bold px-3 py-2 rounded-lg transition shadow-sm">
-                                        Open Chat →
-                                    </a>
-                                @else
-                                    <form action="{{ route('lobby.join', $lobby->id) }}" method="POST" class="m-0">
-                                        @csrf
-                                        <button type="submit" class="bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-indigo-500 text-slate-300 hover:text-indigo-400 font-bold px-3 py-2 rounded-lg transition shadow-sm">
-                                            Request to Join
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-
+                            @if($isOwner || $isMember)
+                                <a href="{{ route('chat.index', $lobby->id) }}" class="l-btn l-btn-primary !min-h-10 shrink-0 !px-4">
+                                    Open Chat →
+                                </a>
+                            @else
+                                <form action="{{ route('lobby.join', $lobby->id) }}" method="POST" class="m-0 shrink-0">
+                                    @csrf
+                                    <button type="submit" class="l-btn l-btn-ghost !min-h-10 !px-4">
+                                        Request to Join
+                                    </button>
+                                </form>
+                            @endif
                         </div>
-                    @empty
-                        <div class="col-span-full p-12 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl text-center text-slate-500 text-sm shadow-inner">
-                            No open collaboration lobbies found matching those filters. Try clearing your search parameters.
-                        </div>
-                    @endforelse
+                    </div>
+                </article>
+            @empty
+                <div class="l-card col-span-full flex flex-col items-center gap-4 border-dashed px-6 py-14 text-center">
+                    <div class="grid h-16 w-16 place-items-center rounded-3xl bg-(--bg) text-3xl">🔍</div>
+                    <div>
+                        <p class="text-base font-bold text-(--black)">No open lobbies found</p>
+                        <p class="mt-1 text-sm text-(--text-2)">No open collaboration lobbies match those filters. Try clearing your search.</p>
+                    </div>
+                    @if(request('search'))
+                        <a href="{{ route('lobby.index') }}" class="l-btn l-btn-primary">Clear search</a>
+                    @endif
                 </div>
-            </div>
-
+            @endforelse
         </div>
-    </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('lobby-splash');
+    let seen = false;
+    try { seen = sessionStorage.getItem('splash_seen') === '1'; } catch (e) {}
+
+    if (seen) { splash.remove(); return; }
+
+    setTimeout(() => {
+        splash.classList.add('hide');
+        try { sessionStorage.setItem('splash_seen', '1'); } catch (e) {}
+        setTimeout(() => splash.remove(), 700);
+    }, 1900);
+});
+</script>
+
 </x-app-layout>
