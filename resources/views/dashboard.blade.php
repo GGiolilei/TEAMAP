@@ -104,7 +104,7 @@ function playNotificationSound() {
     <div class="sticky top-16 z-40 -mx-4 bg-(--bg)/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div role="tablist" aria-label="Dashboard pages"
              class="relative grid w-full max-w-sm grid-cols-2 rounded-2xl border border-(--border) bg-(--surface) p-1 sm:max-w-xs">
-            <span id="tab-indicator" class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-xl bg-(--btn)"></span>
+            <span id="tab-indicator" class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-xl bg-[var(--btn)]"></span>
 
             <button type="button" id="tab-home" role="tab" aria-selected="true" aria-controls="panel-home"
                     class="tab-btn flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white">
@@ -113,7 +113,7 @@ function playNotificationSound() {
             </button>
 
             <button type="button" id="tab-chats" role="tab" aria-selected="false" aria-controls="panel-chats"
-                    class="tab-btn flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-(--text-2)">
+                    class="tab-btn flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-[var(--text-2)]">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6l3-3h11a3 3 0 003-3V7a3 3 0 00-3-3H7a3 3 0 00-3 3v13z" /></svg>
                 Chats
                 @if($joinedLobbies->count() > 0)
@@ -240,12 +240,12 @@ function playNotificationSound() {
 
                         <div class="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:flex-wrap sm:px-0">
                             <a href="{{ route('dashboard') }}"
-                               class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {{ !request('interest') ? 'border-(--btn) bg-(--btn) text-white' : 'border-(--border) bg-(--surface) text-(--text-2) hover:bg-(--hover)' }}">
+                               class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {{ !request('interest') ? 'border-[var(--btn)] bg-[var(--btn)] text-white' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--hover)]' }}">
                                 All
                             </a>
                             @foreach(\App\Models\Interest::take(5)->get() as $tag)
                                 <a href="{{ route('dashboard', ['interest' => $tag->id]) }}"
-                                   class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {{ request('interest') == $tag->id ? 'border-(--btn) bg-(--btn) text-white' : 'border-(--border) bg-(--surface) text-(--text-2) hover:bg-(--hover)' }}">
+                                   class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {{ request('interest') == $tag->id ? 'border-[var(--btn)] bg-[var(--btn)] text-white' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--hover)]' }}">
                                     #{{ $tag->name }}
                                 </a>
                             @endforeach
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const on = idx === i;
             tab.setAttribute('aria-selected', on ? 'true' : 'false');
             tab.classList.toggle('text-white', on);
-            tab.classList.toggle('text-(--text-2)', !on);
+            tab.classList.toggle('text-[var(--text-2)]', !on);
         });
         panels.forEach((panel, idx) => {
             panel.toggleAttribute('inert', idx !== i);
