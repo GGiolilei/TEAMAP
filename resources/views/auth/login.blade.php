@@ -52,7 +52,7 @@
 
             <!-- Log in -->
             <button type="submit"
-                class="w-full rounded-xl bg-(--btn) px-4 py-3 text-sm font-medium text-white transition hover:bg-(--black-2) focus:outline-none focus:ring-4 focus:ring-(--selected)">
+                class="w-full rounded-xl bg-[var(--btn)] px-4 py-3 text-sm font-medium text-white transition hover:bg-[var(--black-2)] focus:outline-none focus:ring-4 focus:ring-[var(--selected)]">
                 {{ __('Log in') }}
             </button>
         </form>
