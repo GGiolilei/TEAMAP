@@ -61,7 +61,7 @@ Route::patch('/profile/cv', [ProfileController::class, 'updateCv'])->name('profi
     Route::get('/lobby', [LobbyController::class, 'index'])->name('lobby.index');
     Route::get('/lobby/create', [LobbyController::class, 'create'])->name('lobby.create');
     Route::delete('/lobbies/{lobby}', [LobbyController::class, 'destroy'])->name('lobbies.destroy');
-    Route::get('/lobbies/{lobby}', [LobbyController::class, 'show'])->name('lobbies.show');
+    Route::get('/lobbies/{lobby}', [ChatController::class, 'index'])->name('lobbies.show');
     
     Route::delete('/lobbies/{lobby}/leave', [LobbyController::class, 'leave'])->name('lobbies.leave');
     Route::middleware(['auth'])->group(function () {
