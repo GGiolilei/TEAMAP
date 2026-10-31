@@ -42,22 +42,23 @@ class DashboardController extends Controller
             ->where('owner_id', '!=', $user->id)
             ->with(['owner', 'interests']);
 
-        $recommendedQuery->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
-            $query->whereIn('interest_id', $userInterestIds);
-        }]);
+        if (!empty($userInterestIds)) {
+            // FIXED: Using whereHas on the relationship to match pivot associations cleanly
+            $recommendedQuery->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
+                $query->whereIn('interest_id', $userInterestIds); // Match pivot foreign key column name
+            }]);
+        }
 
         $recommendedLobbies = $recommendedQuery
             ->orderBy('matching_score', 'desc')
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get()
-            ->map(function ($lobby) use ($userInterestIds) {
+            ->map(function ($lobby) {
+                // If there are no interests matching, ensure it defaults safely to 0
                 $score = $lobby->matching_score ?? 0;
-                $userInterestCount = count($userInterestIds);
-                $lobby->match_percentage = $userInterestCount > 0
-                    ? (int) round(($score / $userInterestCount) * 100)
-                    : 0;
-
+                $percentage = $score * 20; 
+                $lobby->match_percentage = min($percentage, 100); 
                 return $lobby;
             });
 
