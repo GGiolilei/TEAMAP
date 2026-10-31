@@ -14,6 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $ownedLobbyCount = $user->ownedLobbies()->count();
         
         // Ensure user profile record initialization exists
         if (!$user->profile) {
@@ -86,7 +87,7 @@ class DashboardController extends Controller
         $joinedLobbies = Lobby::has('owner')
             ->whereHas('members', function ($q) use ($user) {
                 $q->where('lobby_members.user_id', $user->id)
-                  ->where('lobby_members.status', 'accepted'); 
+                  ->whereIn('lobby_members.status', ['accepted', 'approved']);
             })
             ->with([
                 'owner',
@@ -121,6 +122,7 @@ class DashboardController extends Controller
             'recommendedLobbies', 
             'newestLobbies', 
             'joinedLobbies', 
+            'ownedLobbyCount',
             'ownedLobbiesWithRequests',
             'allInterests'
         ));

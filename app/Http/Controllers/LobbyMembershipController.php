@@ -15,9 +15,10 @@ class LobbyMembershipController extends Controller
     {
         $user = auth()->user();
 
-        // INVENTORY CHECK: Reject if applicant hasn't dropped their CV Scroll
         if (!$user->profile || !$user->profile->cv_path) {
-            return redirect()->back()->with('error', 'Inventory Missing: You must upload your CV scroll in your Profile settings before signing onto a campaign guild!');
+            return redirect()->back()
+                ->with('error', 'Anda belum mengunggah CV. Unggah CV terlebih dahulu sebelum mengajukan diri untuk bergabung ke lobby.')
+                ->with('cv_required', true);
         }
 
         // Check if they have an active or pending application to avoid duplicates

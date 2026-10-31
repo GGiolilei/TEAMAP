@@ -205,7 +205,7 @@ function playNotificationSound() {
 
                     <a href="{{ route('lobbies.owned') }}" class="d-card p-4 transition hover:bg-(--hover) active:scale-[.98]">
                         <span class="d-label block">Owned</span>
-                        <span class="mt-1 block text-3xl font-extrabold tabular-nums text-(--black)">{{ $ownedLobbiesWithRequests->count() ?? 0 }}</span>
+                        <span class="mt-1 block text-3xl font-extrabold tabular-nums text-(--black)">{{ $ownedLobbyCount }}</span>
                         <span class="text-xs text-(--muted)">lobbies</span>
                     </a>
 
@@ -300,7 +300,7 @@ function playNotificationSound() {
                                             <button class="d-btn d-btn-primary d-btn-sm">Join</button>
                                         </form>
                                     @elseif($userApplication->status === 'pending')
-                                        <span class="shrink-0 rounded-full bg-(--warning-bg) px-3 py-1.5 text-xs font-bold text-(--warning)">⏳ Pending</span>
+                                        <span class="shrink-0 rounded-full bg-(--warning-bg) px-3 py-1.5 text-xs font-bold text-(--warning)">Pending</span>
                                     @elseif($userApplication->status === 'accepted')
                                         <a href="{{ route('chat.index', $lobby->id) }}" class="d-btn d-btn-primary d-btn-sm shrink-0">Enter Chat →</a>
                                     @endif
