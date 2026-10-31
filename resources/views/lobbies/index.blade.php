@@ -167,10 +167,10 @@
         </a>
     </section>
 
-<<<<<<< HEAD
+
     {{-- SEARCH + SORT --}}
     <section class="l-card fade-up space-y-3 p-3 sm:p-4" style="animation-delay:.08s">
-=======
+
     @if(session('error'))
         <div role="alert" class="rounded-2xl border border-red-500/25 bg-red-500/10 px-5 py-4 text-sm text-red-700">
             <p class="font-semibold">{{ session('error') }}</p>
@@ -190,7 +190,6 @@
 
     {{-- SEARCH --}}
     <section class="l-card fade-up p-3 sm:p-4" style="animation-delay:.08s">
->>>>>>> origin/rohim
         <form method="GET" action="{{ route('lobby.index') }}">
             <input type="hidden" name="sort" value="{{ $sort }}">
             <div class="flex items-center gap-2">
