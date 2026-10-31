@@ -14,6 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $ownedLobbyCount = $user->ownedLobbies()->count();
         
         // Ensure user profile record initialization exists
         if (!$user->profile) {
@@ -41,23 +42,22 @@ class DashboardController extends Controller
             ->where('owner_id', '!=', $user->id)
             ->with(['owner', 'interests']);
 
-        if (!empty($userInterestIds)) {
-            // FIXED: Using whereHas on the relationship to match pivot associations cleanly
-            $recommendedQuery->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
-                $query->whereIn('interest_id', $userInterestIds); // Match pivot foreign key column name
-            }]);
-        }
+        $recommendedQuery->withCount(['interests as matching_score' => function ($query) use ($userInterestIds) {
+            $query->whereIn('interest_id', $userInterestIds);
+        }]);
 
         $recommendedLobbies = $recommendedQuery
             ->orderBy('matching_score', 'desc')
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get()
-            ->map(function ($lobby) {
-                // If there are no interests matching, ensure it defaults safely to 0
+            ->map(function ($lobby) use ($userInterestIds) {
                 $score = $lobby->matching_score ?? 0;
-                $percentage = $score * 20; 
-                $lobby->match_percentage = min($percentage, 100); 
+                $userInterestCount = count($userInterestIds);
+                $lobby->match_percentage = $userInterestCount > 0
+                    ? (int) round(($score / $userInterestCount) * 100)
+                    : 0;
+
                 return $lobby;
             });
 
@@ -86,7 +86,7 @@ class DashboardController extends Controller
         $joinedLobbies = Lobby::has('owner')
             ->whereHas('members', function ($q) use ($user) {
                 $q->where('lobby_members.user_id', $user->id)
-                  ->where('lobby_members.status', 'accepted'); 
+                  ->whereIn('lobby_members.status', ['accepted', 'approved']);
             })
             ->with([
                 'owner',
@@ -121,6 +121,7 @@ class DashboardController extends Controller
             'recommendedLobbies', 
             'newestLobbies', 
             'joinedLobbies', 
+            'ownedLobbyCount',
             'ownedLobbiesWithRequests',
             'allInterests'
         ));
