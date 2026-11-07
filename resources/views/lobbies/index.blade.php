@@ -228,7 +228,9 @@
             @forelse($items as $lobby)
                 @php
                     $isOwner  = $lobby->owner_id === auth()->id();
-                    $isMember = $lobby->members->contains(auth()->id());
+                    $membershipStatus = $lobby->members->firstWhere('id', auth()->id())?->pivot?->status;
+                    $isMember = $membershipStatus === 'accepted';
+                    $isPending = $membershipStatus === 'pending';
                     $isClosest = $lobby->id === $closestId;
                     $pct      = $lobby->match_percent;
                     $tone     = $lobby->id % 4;
@@ -254,6 +256,10 @@
                         @if($isOwner)
                             <span class="absolute right-4 top-4 z-[1] rounded-full bg-(--warning-bg) px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-(--warning) ring-1 ring-inset ring-(--warning)/25">
                                 👑 Owner
+                            </span>
+                        @elseif($isPending)
+                            <span class="absolute right-4 top-4 z-[1] rounded-full bg-(--warning-bg) px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-(--warning) ring-1 ring-inset ring-(--warning)/25">
+                                Pending
                             </span>
                         @elseif($isMember)
                             <span class="absolute right-4 top-4 z-[1] rounded-full bg-(--success-bg) px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-(--success) ring-1 ring-inset ring-(--success)/25">
@@ -311,6 +317,10 @@
                                 <a href="{{ route('chat.index', $lobby->id) }}" class="l-btn l-btn-primary !min-h-10 shrink-0 !px-4">
                                     Open Chat →
                                 </a>
+                            @elseif($isPending)
+                                <button type="button" disabled class="l-btn l-btn-ghost !min-h-10 shrink-0 !px-4 cursor-not-allowed opacity-60">
+                                    Pending
+                                </button>
                             @else
                                 <form action="{{ route('lobby.join', $lobby->id) }}" method="POST" class="m-0 shrink-0">
                                     @csrf
