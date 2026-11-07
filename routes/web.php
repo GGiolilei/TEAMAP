@@ -126,3 +126,24 @@ Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.
 Route::post('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
 
 });
+
+
+//////ADMIN AJA LOH YA/////
+use App\Http\Controllers\AdminReportController;
+
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
+    Route::get('/admin/reports', [AdminReportController::class, 'index'])->name('admin.reports.index');
+    Route::post('/admin/reports/{report}/status', [AdminReportController::class, 'updateStatus'])->name('admin.reports.updateStatus');
+    Route::delete('/admin/reports/{report}', [AdminReportController::class, 'destroy'])->name('admin.reports.destroy');
+});
+Route::post('/users/{user}/report', [App\Http\Controllers\UserReportController::class, 'store'])->name('users.report');
+Route::delete('/admin/users/{user}', [AdminReportController::class, 'destroyUser'])->name('admin.users.destroy');
+Route::delete('/admin/reports/{report}', [AdminReportController::class, 'destroyReport'])->name('admin.reports.destroy');
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
+    Route::get('/admin/reports', [AdminReportController::class, 'index'])->name('admin.reports.index');
+    
+    // User Deletion Route
+    Route::delete('/admin/users/{user}', [AdminReportController::class, 'destroyUser'])->name('admin.users.destroy');
+    
+    Route::delete('/admin/reports/{report}', [AdminReportController::class, 'destroyReport'])->name('admin.reports.destroy');
+});

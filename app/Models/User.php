@@ -23,7 +23,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 
         'email', 
-        'password'
+        'password',
+        'role'
     ];
 
     /**
@@ -90,5 +91,34 @@ class User extends Authenticatable
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
 {
     return $this->hasMany(Task::class);
+}
+/////////baru nih broski//////
+
+public function isAdmin(): bool
+{
+    return $this->role === 'admin';
+}
+public function filedReports(): HasMany
+{
+    return $this->hasMany(UserReport::class, 'reporter_id');
+}
+public function reportsAgainst(): HasMany
+{
+    return $this->hasMany(UserReport::class, 'reported_user_id');
+}
+// Add this static boot method inside app/Models/User.php
+protected static function boot()
+{
+    parent::boot();
+
+    static::deleting(function ($user) {
+        // Clear all reports filed by or against this user
+        \App\Models\UserReport::where('reporter_id', $user->id)
+            ->orWhere('reported_user_id', $user->id)
+            ->delete();
+
+        // Detach user from all joined lobby member pivot tables
+        $user->lobbies()->detach();
+    });
 }
 }
