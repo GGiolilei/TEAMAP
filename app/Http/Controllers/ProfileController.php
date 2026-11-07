@@ -36,7 +36,6 @@ class ProfileController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'bio' => ['nullable', 'string', 'max:1000'],
             'skills' => ['nullable', 'string', 'max:500'],
-            'cv' => ['nullable', 'file', 'mimes:pdf,docx', 'max:4096'], // 4MB max
             'interests' => ['required', 'array', 'min:3', 'max:5'], // Force 3-5 interests
             'avatar' => 'nullable|image|mimes:jpeg,png,webp|max:4096', // 4MB max
         ]);
@@ -50,11 +49,6 @@ class ProfileController extends Controller
         // Handle Avatar file upload safely
         if ($request->hasFile('avatar')) {
             $profileData['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
-        // Handle CV file upload safely
-        if ($request->hasFile('cv')) {
-            $profileData['cv_path'] = $request->file('cv')->store('cvs', 'public');
         }
 
         $user->profile()->updateOrCreate(['user_id' => $user->id], $profileData);
@@ -82,25 +76,19 @@ class ProfileController extends Controller
         return Redirect::to('/');
     }
 
-   public function updateCv(Request $request)
-{
-    $request->validate([
-        'cv'     => ['nullable', 'file', 'mimes:pdf,docx', 'max:5120'],
-        'avatar' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
-    ]);
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:2048'],
+        ]);
 
-    $profile = $request->user()->profile()->firstOrCreate([]);
+        if ($request->hasFile('avatar')) {
+            $request->user()->profile()->updateOrCreate(
+                ['user_id' => $request->user()->id],
+                ['avatar_path' => $request->file('avatar')->store('avatars', 'public')]
+            );
+        }
 
-    if ($request->hasFile('cv')) {
-        $profile->cv_path = $request->file('cv')->store('cvs', 'public');
+        return back()->with('success', 'Profile updated successfully.');
     }
-
-    if ($request->hasFile('avatar')) {
-        $profile->avatar_path = $request->file('avatar')->store('avatars', 'public');
-    }
-
-    $profile->save();
-
-    return back()->with('success', 'Profile updated successfully.');
 }
-}   

@@ -28,23 +28,13 @@
                         @endforeach
                     </p>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm">
-                        CV Upload Status: 
-                        @if(auth()->user()->profile?->cv_path)
-                            <strong class="text-emerald-400">✓ Uploaded & Active</strong>
-                        @else
-                            <strong class="text-amber-400">✗ No CV Uploaded (Cannot Join Lobbies)</strong>
-                        @endif
-                    </span>
-                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gradient-to-br from-gray-900 to-emerald-950/40 p-6 rounded-xl border border-gray-800 flex flex-col justify-between">
                     <div>
                         <h3 class="text-xl font-bold text-emerald-400 mb-2">Build Your Own Team</h3>
-                        <p class="text-gray-400 text-sm mb-4">Create a brand new startup lobby based around your product goals, choose required skills, and review applicants' CVs.</p>
+                        <p class="text-gray-400 text-sm mb-4">Create a brand new startup lobby based around your product goals and choose the skills you need.</p>
                     </div>
                     <a href="#" class="inline-block text-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-4 rounded-lg transition">
                         + Open a New Lobby

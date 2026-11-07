@@ -47,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-Route::patch('/profile/cv', [ProfileController::class, 'updateCv'])->name('profile.cv.update');
+Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::middleware(['auth'])->group(function () {
 
 });
@@ -72,7 +72,6 @@ Route::patch('/profile/cv', [ProfileController::class, 'updateCv'])->name('profi
     Route::post('/lobby/{lobby}/join', [LobbyMembershipController::class, 'join'])->name('lobby.join');
     Route::post('/lobbies/{lobby}/join', [LobbyController::class, 'join'])->name('lobbies.join');
     Route::patch('/membership/{member}/{status}', [LobbyMembershipController::class, 'updateStatus'])->name('lobby.member.status');
-    Route::get('/lobby/{lobby}/member/{user}/cv', [LobbyMembershipController::class, 'viewMemberCv'])->name('lobby.member.cv');
         Route::post('/membership/{member}/status/{status}', [LobbyMembershipController::class, 'updateStatus'])
     ->name('membership.update')
     ->middleware(['auth']);

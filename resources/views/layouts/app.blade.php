@@ -79,13 +79,10 @@
 
                         <div class="flex items-center gap-3">
                             <div class="hidden items-center gap-3 sm:flex">
-                                <div class="grid h-9 w-9 place-items-center rounded-full bg-(--bubble-me) text-sm font-semibold text-(--black)">
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                                </div>
                                 <div class="leading-tight">
                                     <div class="text-sm font-semibold text-(--text)">{{ Auth::user()->name }}</div>
                                     <div class="flex items-center gap-1.5 text-xs text-(--text-2)">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-(--success)"></span>
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[var(--success)]"></span>
                                         Verified Member
                                     </div>
                                 </div>

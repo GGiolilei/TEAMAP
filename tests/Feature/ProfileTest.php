@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Lobby;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -18,7 +22,49 @@ class ProfileTest extends TestCase
             ->actingAs($user)
             ->get('/profile');
 
-        $response->assertOk();
+        $response
+            ->assertOk()
+            ->assertDontSee('Verification status')
+            ->assertDontSee('cv_input_file');
+
+        $this->assertFalse(Route::has('profile.cv.update'));
+        $this->assertFalse(Route::has('lobby.member.cv'));
+    }
+
+    public function test_user_can_apply_to_join_a_lobby_without_a_cv(): void
+    {
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
+        $lobby = Lobby::create([
+            'owner_id' => $owner->id,
+            'name' => 'Test Lobby',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->post(route('lobby.join', $lobby));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('lobby_members', [
+            'lobby_id' => $lobby->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_user_can_update_their_avatar(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/avatar', [
+                'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        Storage::disk('public')->assertExists($user->fresh()->profile->avatar_path);
     }
 
     public function test_profile_information_can_be_updated(): void

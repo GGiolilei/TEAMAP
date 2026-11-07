@@ -174,11 +174,6 @@
     @if(session('error'))
         <div role="alert" class="rounded-2xl border border-red-500/25 bg-red-500/10 px-5 py-4 text-sm text-red-700">
             <p class="font-semibold">{{ session('error') }}</p>
-            @if(session('cv_required'))
-                <a href="{{ route('profile.edit') }}" class="mt-2 inline-flex font-bold underline underline-offset-2 hover:text-red-900">
-                    Buka profil untuk mengunggah CV
-                </a>
-            @endif
         </div>
     @endif
 

@@ -50,7 +50,7 @@
     .d-btn-sm { min-height: 36px; padding: 0 14px; font-size: .8125rem; border-radius: 10px; }
 
     /* ---------- Two-page slider (Home / Chats) ---------- */
-    #pager-viewport { margin: -8px; padding: 8px; overflow: hidden; }
+    #pager-viewport { margin: -8px; padding: 8px; overflow: hidden; clip-path: inset(0 8px 0 0); }
     #pager-track {
         display: flex; align-items: flex-start; width: 100%;
         transition: transform .45s cubic-bezier(.22,.8,.2,1), height .3s ease;
@@ -196,7 +196,7 @@ function playNotificationSound() {
                 </section>
 
                 {{-- STATS --}}
-                <section class="rise rise-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <section class="rise rise-2 grid grid-cols-2 gap-3 lg:grid-cols-3">
                     <a href="{{ route('lobbies.joined') }}" class="d-card p-4 transition hover:bg-(--hover) active:scale-[.98]">
                         <span class="d-label block">Joined</span>
                         <span class="mt-1 block text-3xl font-extrabold tabular-nums text-(--black)">{{ $joinedLobbies->count() }}</span>
@@ -208,14 +208,6 @@ function playNotificationSound() {
                         <span class="mt-1 block text-3xl font-extrabold tabular-nums text-(--black)">{{ $ownedLobbyCount }}</span>
                         <span class="text-xs text-(--muted)">lobbies</span>
                     </a>
-
-                    <div class="d-card p-4">
-                        <span class="d-label block">CV document</span>
-                        <span class="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold {{ auth()->user()->profile?->cv_path ? 'bg-(--success-bg) text-(--success)' : 'bg-(--warning-bg) text-(--warning)' }}">
-                            <span class="h-2 w-2 rounded-full {{ auth()->user()->profile?->cv_path ? 'bg-(--success)' : 'bg-(--warning)' }}"></span>
-                            {{ auth()->user()->profile?->cv_path ? 'Ready' : 'Missing' }}
-                        </span>
-                    </div>
 
                     <button type="button" onclick="document.getElementById('notifBtn').click()" class="d-card p-4 text-left transition hover:bg-(--hover) active:scale-[.98]">
                         <span class="d-label block">Pending requests</span>
@@ -419,14 +411,6 @@ function playNotificationSound() {
                                 </div>
 
                                 <div class="mt-3 flex items-stretch gap-2">
-                                    @if($applicant->profile?->cv_path)
-                                        <a href="{{ route('lobby.member.cv', [$lobby->id, $applicant->id]) }}"
-                                           target="_blank"
-                                           class="d-btn d-btn-ghost d-btn-sm">
-                                            CV
-                                        </a>
-                                    @endif
-
                                     <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'accepted']) }}" method="POST" class="flex-1">
                                         @csrf
                                         <button type="submit" class="d-btn d-btn-primary d-btn-sm w-full !min-h-11">
@@ -559,7 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const goTo = (i, { scroll = true, updateHash = true } = {}) => {
         page = i;
-        track.style.transform = `translateX(${-100 * i}%)`;
+        track.style.transform = i === 1
+            ? 'translateX(calc(-100% - 8px))'
+            : 'translateX(0)';
         indicator.style.transform = `translateX(${100 * i}%)`;
 
         tabs.forEach((tab, idx) => {

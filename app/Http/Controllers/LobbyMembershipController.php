@@ -4,22 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Lobby;
 use App\Models\LobbyMember;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Auth\Access\AuthorizationException;
 
 class LobbyMembershipController extends Controller
 {
     public function join(Request $request, Lobby $lobby)
     {
         $user = auth()->user();
-
-        if (!$user->profile || !$user->profile->cv_path) {
-            return redirect()->back()
-                ->with('error', 'Anda belum mengunggah CV. Unggah CV terlebih dahulu sebelum mengajukan diri untuk bergabung ke lobby.')
-                ->with('cv_required', true);
-        }
 
         // Check if they have an active or pending application to avoid duplicates
         $alreadyApplied = LobbyMember::where('lobby_id', $lobby->id)
@@ -38,7 +29,7 @@ class LobbyMembershipController extends Controller
             'status' => 'pending'
         ]);
 
-        return redirect()->back()->with('success', 'Application transmitted! Your build specs and CV are pending review by the Guild Leader.');
+        return redirect()->back()->with('success', 'Application transmitted! Your request is pending review by the Guild Leader.');
     }
 
     /**
@@ -74,46 +65,4 @@ class LobbyMembershipController extends Controller
         return redirect()->back()->with('success', $message);
     }
 
-    public function viewMemberCv(Lobby $lobby, User $user)
-    {
-        $currentUserId = auth()->id();
-        $isOwner = $lobby->owner_id === $currentUserId;
-        
-        // Safety gates check: Is the viewer an already APPROVED team member.
-        $isApprovedTeamMember = $lobby->members()
-            ->where('user_id', $currentUserId)
-            ->where('lobby_members.status', 'accepted')
-            ->exists();
-
-        // Check if the user trying to view is authorized at all
-        if (!$isOwner && !$isApprovedTeamMember) {
-            abort(403, 'Unauthorized. You must be an approved member of this project workspace to review assets.');
-        }
-
-        // If a non-owner tries to view someone else's CV, make sure the target is an approved team member
-        if (!$isOwner && ($user->id !== $currentUserId)) {
-            // FIXED: Added explicit 'lobby_members.status' to eliminate SQL ambiguous column errors
-            $isApprovedTarget = $lobby->members()
-                ->where('user_id', $user->id)
-                ->where('lobby_members.status', 'accepted')
-                ->exists();
-                
-            if (!$isApprovedTarget) {
-                abort(403, 'Unauthorized asset lookup configuration. Pending applicants can only be reviewed by the Guild Leader.');
-            }
-        }
-
-        // Grab the file path from the requested user's profile relationship profile
-        $cvPath = $user->profile?->cv_path;
-
-        if (!$cvPath || !Storage::disk('public')->exists($cvPath)) {
-            abort(404, 'The requested professional background document could not be located on our storage nodes.');
-        }
-
-        // Stream the raw asset inside the browser sandboxed window securely instead of auto-downloading it
-        return response()->file(storage_path('app/public/' . $cvPath), [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . \Illuminate\Support\Str::snake($user->name) . '_resume.pdf"'
-        ]);
-    }
 }
