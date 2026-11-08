@@ -148,7 +148,7 @@
                     </h3>
                     <div id="roster-container" class="max-h-64 space-y-2 overflow-y-auto pr-1">
                         @foreach($lobby->members as $member)
-                            <div data-user-id="{{ $member->id }}" class="flex items-center justify-between gap-3 rounded-xl border border-(--border) bg-(--bg) p-2.5">
+                            <div data-user-id="{{ $member->id }}" class="group/row flex items-center justify-between gap-3 rounded-xl border border-(--border) bg-(--bg) p-2.5">
                                 <div class="flex min-w-0 items-center gap-3">
                                     <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-(--bubble-me) text-xs font-bold uppercase text-(--black)">
                                         {{ substr($member->name, 0, 2) }}
@@ -159,7 +159,18 @@
                                     </div>
                                 </div>
                                 {{-- Default status indicator to offline, updated via Echo presence channels if needed --}}
-                                <span class="status-dot h-2.5 w-2.5 shrink-0 rounded-full bg-(--selected) transition-colors duration-300"></span>
+                                <div class="flex shrink-0 items-center gap-1.5">
+                                    {{-- Report Button --}}
+                                    @if($member->id !== auth()->id())
+                                        <button type="button"
+                                                onclick="openReportModal('{{ $member->id }}', {{ \Illuminate\Support\Js::from($member->name) }})"
+                                                title="Report user" aria-label="Report {{ $member->name }}"
+                                                class="grid h-8 w-8 place-items-center rounded-lg text-(--muted) opacity-70 transition hover:bg-(--error-bg) hover:text-(--error) hover:opacity-100 focus-visible:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V4m0 0h11l-1.5 3.5L16 11H5" /></svg>
+                                        </button>
+                                    @endif
+                                    <span class="status-dot h-2.5 w-2.5 shrink-0 rounded-full bg-(--selected) transition-colors duration-300"></span>
+                                </div>
                             </div>
                         @endforeach
                     </div>

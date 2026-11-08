@@ -48,6 +48,14 @@
             }
 
             ::selection { background: var(--black); color: #fff; }
+
+            /* Report modal */
+            @keyframes reportSheetIn {
+                from { opacity: 0; transform: translateY(24px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+            .report-panel { animation: reportSheetIn .22s ease-out; }
+            @media (prefers-reduced-motion: reduce) { .report-panel { animation: none; } }
         </style>
     </head>
     <body class="antialiased">
@@ -82,7 +90,7 @@
                                 <div class="leading-tight">
                                     <div class="text-sm font-semibold text-(--text)">{{ Auth::user()->name }}</div>
                                     <div class="flex items-center gap-1.5 text-xs text-(--text-2)">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-[var(--success)]"></span>
+                                        <span class="h-1.5 w-1.5 rounded-full bg-(--success)"></span>
                                         Verified Member
                                     </div>
                                 </div>
@@ -91,7 +99,7 @@
                             @unless($isChatPage)
                                 <a href="{{ route('profile.edit') }}" title="Account Settings"
                                    class="rounded-xl border border-(--border) bg-(--surface) p-2 text-(--text-2) transition hover:bg-(--hover) hover:text-(--text)">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-2.37.996.608.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 </a>
 
                                 <form method="POST" action="{{ route('logout') }}">
@@ -111,5 +119,66 @@
                 {{ $slot }}
             </main>
         </div>
+
+        {{-- USER REPORT MODAL (bottom sheet on mobile) --}}
+        <div id="report-user-modal" class="fixed inset-0 z-[80] flex hidden items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
+            <div class="absolute inset-0 bg-(--black)/40 backdrop-blur-sm" onclick="closeReportModal()"></div>
+
+            <div class="report-panel relative w-full max-w-md rounded-t-3xl border border-(--border) bg-(--surface) p-6 shadow-2xl sm:rounded-3xl"
+                 style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+                <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-(--selected) sm:hidden"></div>
+
+                <div class="mb-5 flex items-start gap-3">
+                    <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-(--error-bg) text-(--error)">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V4m0 0h11l-1.5 3.5L16 11H5" /></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="report-title" class="text-lg font-bold tracking-tight text-(--black)">Report workspace member</h3>
+                        <p class="mt-0.5 truncate text-sm text-(--text-2)">Reporting user: <span id="report-target-name" class="font-bold text-(--error)"></span></p>
+                    </div>
+                </div>
+
+                <form id="report-user-form" method="POST" action="">
+                    @csrf
+                    <div>
+                        <label for="report-reason" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-(--text-2)">Report reason / note</label>
+                        <textarea id="report-reason" name="reason" rows="4" required
+                                  class="block w-full resize-none rounded-xl border border-(--border) bg-(--bg) p-3.5 text-base text-(--text) outline-none transition placeholder:text-(--muted) focus:border-(--btn) focus:bg-(--surface) focus:ring-4 focus:ring-(--selected)"
+                                  placeholder="Explain why this person is being reported..."></textarea>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-5">
+                        <button type="button" onclick="closeReportModal()"
+                                class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--text) transition hover:bg-(--hover) active:scale-[.97] sm:flex-none">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-(--error) px-4 text-sm font-bold text-white transition hover:brightness-95 active:scale-[.97] sm:flex-none">
+                            Submit Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openReportModal(userId, userName) {
+                document.getElementById('report-user-form').reset();
+                document.getElementById('report-target-name').innerText = userName;
+                document.getElementById('report-user-form').action = `/users/${userId}/report`;
+                document.getElementById('report-user-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => document.getElementById('report-reason')?.focus({ preventScroll: true }), 50);
+            }
+
+            function closeReportModal() {
+                document.getElementById('report-user-modal').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeReportModal();
+            });
+        </script>
     </body>
 </html>
