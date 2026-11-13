@@ -10,12 +10,12 @@ export default defineConfig({
     ],
 
     server: {
-        host: 'localhost',
+        host: '192.168.1.15',
         port: 5173,
         strictPort: true,
 
         hmr: {
-            host: 'localhost',
+            host: '192.168.1.15',
         },
     },
 });

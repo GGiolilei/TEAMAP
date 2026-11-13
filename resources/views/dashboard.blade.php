@@ -146,7 +146,7 @@ function playNotificationSound() {
                         </a>
 
                         <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium text-(--text-2)">Welcome back 👋</p>
+                            <p class="text-sm font-medium text-(--text-2)">Welcome back</p>
                             <h1 class="truncate text-2xl font-extrabold tracking-tight text-(--black) sm:text-3xl">
                                 {{ auth()->user()->name ?? 'Jane Doe' }}
                             </h1>

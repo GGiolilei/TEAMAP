@@ -10,7 +10,8 @@ class Task extends Model
         'title',
         'status',
         'user_id',
-        'lobby_id', // <-- Must be present here
+        'lobby_id',
+        'status',// <-- Must be present here
     ];
 
     public function lobby(): BelongsTo
