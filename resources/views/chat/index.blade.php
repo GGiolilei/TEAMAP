@@ -283,14 +283,22 @@
 
                 <div class="flex shrink-0 items-center gap-2">
                     {{-- Task Board Link Button --}}
-                    <a href="{{ route('task.index') }}" aria-label="Task Board"
-                       class="inline-flex h-11 items-center gap-1.5 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--text) transition hover:bg-(--hover) active:scale-95 sm:px-3.5">
-                        <svg class="h-4 w-4 text-(--text-2)" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        <span class="hidden sm:inline lg:hidden">Tasks</span>
-                        <span class="hidden lg:inline">Task Board</span>
-                    </a>
+@php
+    $targetLobby = $lobby 
+        ?? auth()->user()?->lobbies()->first() 
+        ?? auth()->user()?->ownedLobbies()->first();
+@endphp
+
+@if($targetLobby)
+    <a href="{{ route('task.index', $targetLobby->id) }}" aria-label="Task Board"
+       class="inline-flex h-11 items-center gap-1.5 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--text) transition hover:bg-(--hover) active:scale-95 sm:px-3.5">
+        <svg class="h-4 w-4 text-(--text-2)" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+        <span class="hidden sm:inline lg:hidden">Tasks</span>
+        <span class="hidden lg:inline">Task Board</span>
+    </a>
+@endif
 
                     @if($currentChannel)
                         <a href="{{ route('chat.huddle', ['channel' => $currentChannel->id]) }}"

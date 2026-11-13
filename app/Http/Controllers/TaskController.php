@@ -11,17 +11,23 @@ use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
-    public function index()
-    {
-        // Fallback: Get the first lobby the authenticated user belongs to
-        $lobby = auth()->user()->lobbies()->first() ?? Lobby::first();
-        
-        if (!$lobby) {
-            abort(404, 'No active workspace found.');
-        }
+    public function index(Lobby $lobby)
+{
+    $userId = auth()->id();
 
-        return view('task.index', compact('lobby'));
+    // Ensure the user is either the lobby owner or a member of this specific lobby
+    $hasAccess = $lobby->owner_id === $userId
+        || $lobby->members()->where('users.id', $userId)->exists();
+
+    if (!$hasAccess) {
+        abort(403, 'You do not have access to this lobby task board.');
     }
+
+    // Eager-load only this lobby's tasks, members, and channels
+    $lobby->load(['tasks.user', 'members', 'channels']);
+
+    return view('task.index', compact('lobby'));
+}
 
     public function store(Request $request, Lobby $lobby)
     {
