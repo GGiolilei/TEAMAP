@@ -411,15 +411,16 @@ function playNotificationSound() {
                                 </div>
 
                                 <div class="mt-3 flex items-stretch gap-2">
-                                    <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'accepted']) }}" method="POST" class="flex-1">
-                                        @csrf
-                                        <button type="submit" class="d-btn d-btn-primary d-btn-sm w-full !min-h-11">
-                                            Approve
-                                        </button>
-                                    </form>
-
+                         <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'accepted']) }}" method="POST" class="flex-1">
+        @csrf
+        @method('PATCH')
+        <button type="submit" class="d-btn d-btn-primary d-btn-sm w-full !min-h-11">
+            Approve
+        </button>
+    </form>
                                     <form action="{{ route('membership.update', ['member' => $applicant->pivot->id, 'status' => 'rejected']) }}" method="POST" class="flex-1">
                                         @csrf
+                                        @method('PATCH')
                                         <button type="submit" class="d-btn d-btn-ghost d-btn-sm w-full !min-h-11 hover:!bg-(--error-bg) hover:!text-(--error)">
                                             Reject
                                         </button>

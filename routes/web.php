@@ -62,11 +62,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/lobby/create', [LobbyController::class, 'create'])->name('lobby.create');
 
     // --- Lobby Membership Actions & Moderation ---
+   // --- Lobby Membership Actions & Moderation ---
     Route::post('/lobby/{lobby}/join', [LobbyMembershipController::class, 'join'])->name('lobby.join');
     Route::post('/lobbies/{lobby}/join', [LobbyController::class, 'join'])->name('lobbies.join');
-    Route::patch('/membership/{member}/{status}', [LobbyMembershipController::class, 'updateStatus'])->name('lobby.member.status');
-    Route::patch('/membership/{member}/status/{status}', [LobbyMembershipController::class, 'updateStatus'])->name('membership.update');
-
+    Route::match(['patch', 'post'], '/membership/{member}/{status}', [LobbyMembershipController::class, 'updateStatus'])->name('lobby.member.status');
+    Route::match(['patch', 'post'], '/membership/{member}/status/{status}', [LobbyMembershipController::class, 'updateStatus'])->name('membership.update');
+    
     // --- Channel Provisioning & Notifications ---
     Route::get('/lobbies/{lobby}/channels/create', [ChannelController::class, 'create'])->name('lobbies.channels.create');
     Route::post('/lobbies/{lobby}/channels', [ChannelController::class, 'store'])->name('lobbies.channels.store');
