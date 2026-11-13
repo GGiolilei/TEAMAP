@@ -11,11 +11,10 @@ use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
-    public function index(Lobby $lobby)
+  public function index(Lobby $lobby)
 {
     $userId = auth()->id();
 
-    // Ensure the user is either the lobby owner or a member of this specific lobby
     $hasAccess = $lobby->owner_id === $userId
         || $lobby->members()->where('users.id', $userId)->exists();
 
@@ -23,12 +22,17 @@ class TaskController extends Controller
         abort(403, 'You do not have access to this lobby task board.');
     }
 
-    // Eager-load only this lobby's tasks, members, and channels
-    $lobby->load(['tasks.user', 'members', 'channels']);
+    $lobby->load(['tasks.user', 'members', 'channels', 'owner']);
 
-    return view('task.index', compact('lobby'));
+    // Combine the lobby owner and members into one deduplicated collection
+    $assignableMembers = $lobby->members
+        ->push($lobby->owner)
+        ->filter()
+        ->unique('id')
+        ->values();
+
+    return view('task.index', compact('lobby', 'assignableMembers'));
 }
-
     public function store(Request $request, Lobby $lobby)
     {
         $validated = $request->validate([
